@@ -421,6 +421,8 @@ function parseGrid(gridMode: GridMode): { cols: number; rows: number } {
       return { cols: 2, rows: 2 };
     case "3x2":
       return { cols: 3, rows: 2 };
+    case "3x3":
+      return { cols: 3, rows: 3 };
     case "1x1":
     default:
       return { cols: 1, rows: 1 };
