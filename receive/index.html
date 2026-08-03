@@ -7,6 +7,10 @@
     <title>Lumix — receive</title>
     <meta name="theme-color" content="#0F0F1A" />
     <link rel="icon" href="../lumix_logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../success.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Lumix" />
     <link rel="stylesheet" href="../shared/style.css" />
   </head>
   <body class="receiver-page">
@@ -25,6 +29,7 @@
             <h1>Receive</h1>
           </div>
           <div class="heading-actions">
+            <button id="pwa-install-btn" type="button" class="history-toggle-btn" style="display: none; border-color: var(--accent); color: var(--accent);" aria-label="Install Lumix app">Install App</button>
             <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
           </div>
           <div class="hint status-line" id="stats" aria-live="polite">Ready to scan a file or text stream</div>

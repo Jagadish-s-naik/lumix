@@ -665,3 +665,25 @@ function updateStats() {
   metric("m-block").textContent = `${decoder.blockLen} B`;
   metric("m-payload").textContent = `${Math.round(decoder.totalLen / 1024)} KB`;
 }
+
+// PWA beforeinstallprompt handler
+let deferredInstallPrompt: any = null;
+const pwaInstallBtn = document.getElementById("pwa-install-btn") as HTMLButtonElement | null;
+
+window.addEventListener("beforeinstallprompt", (e: Event) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (pwaInstallBtn) {
+    pwaInstallBtn.style.display = "inline-block";
+  }
+});
+
+pwaInstallBtn?.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === "accepted") {
+    pwaInstallBtn.style.display = "none";
+  }
+  deferredInstallPrompt = null;
+});
