@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumix — transfer files with light</title>
+    <meta
+      name="description"
+      content="Send a file or text between two devices with nothing but a screen and a camera. Fountain-coded animated QR codes, no network path in between."
+    />
+    <meta name="theme-color" content="#0F0F1A" />
+
+    <!-- Absolute URLs: scrapers are inconsistent about resolving relative ones.
+         Set VITE_SITE_URL at build time when deploying elsewhere. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lumix" />
+    <meta property="og:title" content="Lumix — transfer files with light" />
+    <meta
+      property="og:description"
+      content="Fountain-coded animated QR codes, screen to camera. No account, no pairing, no network path between the two devices. 129 KB/s phone to phone."
+    />
+    <meta property="og:url" content="%SITE_URL%" />
+    <meta property="og:image" content="%OG_IMAGE%" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A phone mid-transfer, reading an animated QR code off a laptop screen at 129.2 KB/s."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="./lumix_logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./success.png" />
+    <link rel="stylesheet" href="./shared/style.css" />
+  </head>
+  <body class="home-page">
+    <header class="site-header">
+      <a class="brand" href="./"><svg class="brand-logo" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="28" stroke="currentColor" stroke-width="6" fill="none"/><path d="M50 14V22M50 78V86M14 50H22M78 50H86" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="50" cy="50" r="10" fill="currentColor"/></svg>Lumix</a>
+      <span class="header-note">Screen to camera. No network in between.</span>
+    </header>
+    <main class="home-shell">
+      <section class="hero">
+        <h1>Transfer files<br />with light.</h1>
+        <p class="hero-copy">
+          Send a file or a block of text from one screen to another device's camera.
+          No account, pairing, cloud storage, or network path between devices.
+        </p>
+      </section>
+
+      <section class="transfer-grid" aria-label="Choose a side">
+        <article class="transfer-card file-card">
+          <div>
+            <p class="card-kicker">This screen transmits</p>
+            <h2>Send a file or text</h2>
+            <p>Any file up to %MAX_FILE_LABEL%, or a pasted text snippet up to %MAX_SNIPPET_LABEL%. Compressed when it helps, restored with its original name.</p>
+          </div>
+          <div class="card-actions">
+            <a class="action" href="./send/">Send <svg class="action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M12 5l7 7-7 7"/></svg></a>
+          </div>
+        </article>
+
+        <article class="transfer-card note-feature-card">
+          <div>
+            <p class="card-kicker">This camera receives</p>
+            <h2>Point and recover</h2>
+            <p>Detects on its own whether a file or text is arriving, and verifies it with SHA-256 before handing it over.</p>
+          </div>
+          <div class="card-actions">
+            <a class="action" href="./receive/">Receive <svg class="action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M5 12l7 7 7-7"/></svg></a>
+          </div>
+        </article>
+      </section>
+
+      <p class="privacy-note">
+        A network path is not required between the devices. The bytes travel as light.
+        Files are not encrypted, so anything on the sending screen is readable by any
+        camera pointed at it.
+      </p>
+    </main>
+    <footer class="site-footer">
+      <span class="footer-id">
+        <span>Lumix</span>
+        <span>v%APP_VERSION% · build %BUILD_ID%</span>
+      </span>
+    </footer>
+  </body>
+</html>

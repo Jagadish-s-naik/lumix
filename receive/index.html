@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- No scale lock here; see the 16px note on the settings controls in style.css. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Lumix — receive</title>
+    <meta name="theme-color" content="#0F0F1A" />
+    <link rel="icon" href="../lumix_logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/style.css" />
+  </head>
+  <body class="receiver-page">
+    <header class="site-header">
+      <a class="brand" href="../"><svg class="brand-logo" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="28" stroke="currentColor" stroke-width="6" fill="none"/><path d="M50 14V22M50 78V86M14 50H22M78 50H86" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="50" cy="50" r="10" fill="currentColor"/></svg>Lumix</a>
+      <div class="header-side">
+        <span class="header-note">Screen to camera. No network in between.</span>
+        <span class="mode-badge">Receive</span>
+      </div>
+    </header>
+    <main class="receiver-shell">
+      <section class="receiver-primary">
+        <div class="receiver-heading">
+          <div>
+            <p class="eyebrow">Camera → device</p>
+            <h1>Receive</h1>
+          </div>
+          <div class="hint status-line" id="stats">Ready to scan a file or text stream</div>
+        </div>
+        <button id="start">Start camera</button>
+        <div class="preview" id="preview" style="display: none">
+          <video id="video" muted playsinline></video>
+          <div class="transfer-hud">
+            <div class="progress-status" id="progress-status" style="display: none" aria-live="polite">
+              <strong id="progress-label">0% · 0 frames</strong>
+              <span id="eta-label">Estimating time…</span>
+            </div>
+            <div
+              class="progress"
+              id="progress"
+              style="display: none"
+              role="progressbar"
+              aria-label="Transfer recovery progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            ><div id="bar"></div></div>
+          </div>
+        </div>
+        <div id="result"></div>
+        <details class="settings diagnostics" id="diagnostics" style="display: none">
+          <summary>Live diagnostics</summary>
+          <div class="metrics" id="metrics" style="display: none">
+            <div class="metric"><div class="k">capture fps</div><div class="v" id="m-cap">—</div></div>
+            <div class="metric"><div class="k">decode fps</div><div class="v amber" id="m-dec">—</div></div>
+            <div class="metric"><div class="k">goodput</div><div class="v amber" id="m-rate">—</div></div>
+            <div class="metric"><div class="k">elapsed</div><div class="v" id="m-time">—</div></div>
+            <div class="metric"><div class="k">frames new/dup</div><div class="v" id="m-frames">—</div></div>
+            <div class="metric"><div class="k">blocks K</div><div class="v" id="m-k">—</div></div>
+            <div class="metric"><div class="k">block len</div><div class="v" id="m-block">—</div></div>
+            <div class="metric"><div class="k">transfer</div><div class="v" id="m-payload">—</div></div>
+          </div>
+        </details>
+        <details class="settings" id="settings">
+          <summary>Receive settings</summary>
+          <div class="row">
+            <label>capture width
+              <select id="cfg-width"><option>960</option><option selected>1280</option><option>1920</option></select>
+            </label>
+            <label>capture fps
+              <select id="cfg-capfps"><option>30</option><option selected>60</option></select>
+            </label>
+            <label>decode workers
+              <select id="cfg-workers"><option>1</option><option selected>2</option><option>3</option></select>
+            </label>
+          </div>
+          <p class="hint settings-actual" id="camera-actual">Applied when the camera starts.</p>
+        </details>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span class="footer-id">
+        <span>Lumix</span>
+        <span>v%APP_VERSION% · build %BUILD_ID%</span>
+      </span>
+    </footer>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

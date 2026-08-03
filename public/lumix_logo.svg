@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="lumix-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#818CF8" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="#1E1B4B" />
+  <circle cx="50" cy="50" r="28" stroke="url(#lumix-grad)" stroke-width="6" fill="none" />
+  <path d="M50 14V22M50 78V86M14 50H22M78 50H86" stroke="url(#lumix-grad)" stroke-width="6" stroke-linecap="round" />
+  <circle cx="50" cy="50" r="10" fill="#22D3EE" />
+</svg>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumix — send</title>
+    <meta name="theme-color" content="#0F0F1A" />
+    <link rel="icon" href="../lumix_logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/style.css" />
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <a class="brand" href="../"><svg class="brand-logo" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="28" stroke="currentColor" stroke-width="6" fill="none"/><path d="M50 14V22M50 78V86M14 50H22M78 50H86" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="50" cy="50" r="10" fill="currentColor"/></svg>Lumix</a>
+      <div class="header-side">
+        <span class="header-note">Screen to camera. No network in between.</span>
+        <span class="mode-badge">Send</span>
+      </div>
+    </header>
+    <main class="send-shell">
+      <section class="tool-intro">
+        <p class="eyebrow">Screen → camera</p>
+        <h1 id="tool-title">Send a file</h1>
+        <p>Nothing leaves your device until you scan with a receiver.</p>
+      </section>
+
+      <div class="mode-picker" id="mode-picker" role="radiogroup" aria-label="What to send">
+        <label>
+          <input type="radio" name="send-mode" value="file" checked />
+          <span>File</span>
+        </label>
+        <label>
+          <input type="radio" name="send-mode" value="snippet" />
+          <span>Text snippet</span>
+        </label>
+      </div>
+
+      <div class="hint status-line" id="specs">Choose a file to begin</div>
+
+      <label class="file-picker" id="pane-file">
+        <span id="file-picker-label">Any file · up to %MAX_FILE_LABEL%</span>
+        <input id="cfg-file" type="file" />
+      </label>
+
+      <div class="demo-picker" id="pane-demo" hidden>
+        <span>Demo payload</span>
+        <div class="demo-buttons">
+          <button type="button" data-demo="success.png">512 KB image</button>
+          <button type="button" data-demo="success-2mb.png">2 MB image</button>
+        </div>
+      </div>
+
+      <div class="note-composer" id="pane-snippet" hidden>
+        <label for="snippet-text" id="snippet-label">Text to send</label>
+        <textarea id="snippet-text" rows="7" placeholder="Paste or type anything — a URL, a config, a wall of text…"></textarea>
+        <button id="send-snippet" type="button">Start text stream</button>
+      </div>
+
+      <div class="stage" id="stage" hidden><canvas id="qr" width="16" height="16"></canvas></div>
+      <details class="settings">
+        <summary>Transfer settings</summary>
+        <div class="row">
+          <label>
+            tx fps
+            <!-- Options come from shared/send-settings.ts via htmlTokens() -->
+            <select id="cfg-fps">%TX_FPS_OPTIONS%</select>
+          </label>
+          <label>
+            bytes / frame
+            <select id="cfg-bytes">%FRAME_BYTES_OPTIONS%</select>
+          </label>
+          <label>
+            error correction
+            <select id="cfg-ecc">
+              <option selected>L</option><option>M</option><option>Q</option><option>H</option>
+            </select>
+          </label>
+          <label>
+            display size
+            <input id="cfg-size" type="range" min="300" max="1200" step="50" value="900" />
+          </label>
+        </div>
+      </details>
+      <div class="hint footer-hint">
+        Open <a href="../receive/">Receive</a> on the other device. Turn up this screen's brightness.
+      </div>
+    </main>
+    <footer class="site-footer">
+      <span class="footer-id">
+        <span>Lumix</span>
+        <span>v%APP_VERSION% · build %BUILD_ID%</span>
+      </span>
+    </footer>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
