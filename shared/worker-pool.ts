@@ -16,7 +16,8 @@ export interface PoolWorker {
 
 interface DecodeMessage {
   id: number;
-  bytes: Uint8Array | null;
+  bytes?: Uint8Array | null;
+  results?: Uint8Array[];
 }
 
 export class DecodeWorkerPool {
@@ -47,10 +48,14 @@ export class DecodeWorkerPool {
       const slot = this.workers.length;
       const worker = this.create();
       worker.onmessage = (event: MessageEvent) => {
-        const { id, bytes } = event.data as DecodeMessage;
+        const { id, bytes, results } = event.data as DecodeMessage;
         if (id === -1) return; // warm-up ping, no frame attached
         this.busy[slot] = false;
-        if (bytes) this.onDecoded(bytes);
+        if (results && results.length > 0) {
+          for (const res of results) this.onDecoded(res);
+        } else if (bytes) {
+          this.onDecoded(bytes);
+        }
       };
       this.workers.push(worker);
       this.busy.push(false);

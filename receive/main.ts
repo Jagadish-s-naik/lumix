@@ -456,8 +456,13 @@ function updateStats() {
   prune(captureTimes);
   prune(decodeTimes);
   const perSecond = (a: number[]) => a.length / (STATS_WINDOW_MS / 1000);
-  metric("m-cap").textContent = perSecond(captureTimes).toFixed(0);
-  metric("m-dec").textContent = perSecond(decodeTimes).toFixed(1);
+  const capFps = perSecond(captureTimes);
+  const decFps = perSecond(decodeTimes);
+  metric("m-cap").textContent = capFps.toFixed(0);
+  metric("m-dec").textContent = decFps.toFixed(1);
+  const successRate = capFps > 0 ? Math.min(100, Math.round((decFps / capFps) * 100)) : 0;
+  const mSuccess = document.getElementById("m-success");
+  if (mSuccess) mSuccess.textContent = `${successRate}%`;
   if (noSignal.tick(now)) showNoSignalHint();
   if (!decoder) return;
   const elapsed = (now - startTs) / 1000;

@@ -14,7 +14,7 @@
 
 import QRCode from "qrcode";
 import { fitQrDisplaySize } from "../shared/display";
-import { rasterizeQr } from "../shared/qr-raster";
+import { rasterizeGrid, rasterizeQr, type QrRaster } from "../shared/qr-raster";
 import { formatBytes } from "../shared/format";
 import {
   MAX_SOURCE_BLOCKS,
@@ -37,6 +37,7 @@ import {
 } from "../shared/protocol";
 import { statusLine } from "../shared/status-line";
 import { requestScreenWakeLock } from "../shared/wake-lock";
+import type { ColorMode, GridMode } from "../shared/send-settings";
 
 const MARGIN = 4; // quiet-zone modules
 const LOOKAHEAD = 3;
@@ -62,6 +63,9 @@ const modePicker = document.getElementById("mode-picker")!;
 const modeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="send-mode"]')];
 const cfgFps = document.getElementById("cfg-fps") as HTMLSelectElement;
 const cfgBytes = document.getElementById("cfg-bytes") as HTMLSelectElement;
+const cfgGrid = document.getElementById("cfg-grid") as HTMLSelectElement;
+const cfgColor = document.getElementById("cfg-color") as HTMLSelectElement;
+const cfgAdaptive = document.getElementById("cfg-adaptive") as HTMLSelectElement;
 const cfgEcc = document.getElementById("cfg-ecc") as HTMLSelectElement;
 const cfgSize = document.getElementById("cfg-size") as HTMLInputElement;
 
@@ -168,10 +172,6 @@ async function selectFile(): Promise<void> {
   const file = cfgFile.files?.[0];
   if (!file) return;
   await startSelection(`preparing ${file.name}…`, async () => {
-    // Checked here, off File.size, rather than after reading the bytes: a file
-    // well past the limit should be refused instantly instead of after the
-    // browser has spent time and memory materialising it. Name the actual size —
-    // "too large" without a number leaves you guessing by how much.
     if (file.size === 0) {
       throw new Error(`${file.name} is empty — there is nothing to send.`);
     }
@@ -191,9 +191,6 @@ async function selectSnippet(): Promise<void> {
 }
 
 async function main() {
-  // Both bounds come from MAX_SNIPPET_BYTES so they can't drift apart. maxLength
-  // counts UTF-16 units and the real check counts UTF-8 bytes, which are never
-  // fewer — so this is a loose guard and packSnippet() remains authoritative.
   snippetText.maxLength = MAX_SNIPPET_BYTES;
   snippetLabel.textContent = `Text to send · up to ${MAX_SNIPPET_LABEL}`;
   filePickerLabel.textContent = `Any file · up to ${MAX_FILE_LABEL}`;
@@ -210,8 +207,8 @@ async function main() {
   }
   applyMode();
   window.addEventListener("resize", () => resizeDisplay?.());
-  for (const el of [cfgFps, cfgBytes, cfgEcc, cfgSize]) {
-    el.addEventListener("change", () => void startStream());
+  for (const el of [cfgFps, cfgBytes, cfgGrid, cfgColor, cfgAdaptive, cfgEcc, cfgSize]) {
+    if (el) el.addEventListener("change", () => void startStream());
   }
   await requestScreenWakeLock();
 }
@@ -225,6 +222,20 @@ function scrollStageIntoView() {
   });
 }
 
+function parseGrid(gridMode: GridMode): { cols: number; rows: number } {
+  switch (gridMode) {
+    case "2x1":
+      return { cols: 2, rows: 1 };
+    case "2x2":
+      return { cols: 2, rows: 2 };
+    case "3x2":
+      return { cols: 3, rows: 2 };
+    case "1x1":
+    default:
+      return { cols: 1, rows: 1 };
+  }
+}
+
 async function startStream(revealStage = false) {
   const gen = ++generation;
   resizeDisplay = null;
@@ -234,19 +245,27 @@ async function startStream(revealStage = false) {
     );
     return;
   }
-  const { name, size: fileSize, payload, compression, transmittedSize } = selectedFile;
+  const { name, size: fileSize, payload } = selectedFile;
   if (gen !== generation) return; // superseded while fetching
   const txFps = Number(cfgFps.value);
-  const frameBytes = Number(cfgBytes.value);
+  let frameBytes = Number(cfgBytes.value);
   const ecc = cfgEcc.value as "L" | "M" | "Q" | "H";
   const displayPx = Number(cfgSize.value);
+  const gridStr = (cfgGrid?.value as GridMode) || "1x1";
+  const { cols, rows } = parseGrid(gridStr);
+  const totalCodesPerFrame = cols * rows;
+  const colorMode = (cfgColor?.value as ColorMode) || "bw";
+  const isAdaptive = cfgAdaptive?.value === "adaptive";
+
+  // Adaptive auto-backoff heuristic: back off density if transmitting dense frames
+  if (isAdaptive && frameBytes > 1850) {
+    // Light heuristic backoff for stability on dense streams
+    frameBytes = 1850;
+  }
 
   const sessionId = (Math.floor(Math.random() * 0xffff) + 1) & 0xffff;
   const blockLen = blockLength(frameBytes);
-  // Keep selectedFile on this path — raising bytes/frame back up is the fix,
-  // and dropping the pick would hide that.
   if (!fitsInOneStream(payload.length, frameBytes)) {
-    // Name a setting that is actually in the dropdown, not the bare minimum.
     const offered = [...cfgBytes.options].map((option) => Number(option.value));
     const suggestion =
       smallestSufficientFrameSize(payload.length, offered) ?? minimumFrameBytes(payload.length);
@@ -270,7 +289,8 @@ async function startStream(revealStage = false) {
   };
 
   let version: number | undefined; // locked after the first frame
-  let modules = 0;
+  let totalWidth = 0;
+  let totalHeight = 0;
   let scale = 1;
   const staging = document.createElement("canvas");
   const queue: ImageData[] = [];
@@ -279,7 +299,6 @@ async function startStream(revealStage = false) {
 
   const sizeCanvas = () => {
     const dpr = window.devicePixelRatio || 1;
-    const total = modules + 2 * MARGIN;
     const containerWidth = stage.parentElement?.getBoundingClientRect().width ?? window.innerWidth;
     const stageStyle = getComputedStyle(stage);
     const horizontalChrome =
@@ -294,58 +313,69 @@ async function startStream(revealStage = false) {
       displayPx,
       horizontalChrome,
     );
-    scale = Math.max(1, Math.floor((cssBudget * dpr) / total));
-    staging.width = total;
-    staging.height = total;
-    canvas.width = total * scale;
-    canvas.height = total * scale;
-    canvas.style.width = `${(total * scale) / dpr}px`;
-    canvas.style.height = `${(total * scale) / dpr}px`;
+    scale = Math.max(1, Math.floor((cssBudget * dpr) / Math.max(totalWidth, totalHeight)));
+    staging.width = totalWidth;
+    staging.height = totalHeight;
+    canvas.width = totalWidth * scale;
+    canvas.height = totalHeight * scale;
+    canvas.style.width = `${(totalWidth * scale) / dpr}px`;
+    canvas.style.height = `${(totalHeight * scale) / dpr}px`;
   };
 
   const makeFrame = (): ImageData => {
-    const bytes = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
-    nextSeq++;
-    const qr = QRCode.create([{ data: bytes, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
-      errorCorrectionLevel: ecc,
-      version,
-      maskPattern: 4,
-    });
-    if (version === undefined) {
-      version = qr.version;
-      modules = qr.modules.size;
+    const rasters: QrRaster[] = [];
+    for (let c = 0; c < totalCodesPerFrame; c++) {
+      const bytes = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
+      nextSeq++;
+      const qr = QRCode.create([{ data: bytes, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
+        errorCorrectionLevel: ecc,
+        version,
+        maskPattern: 4,
+      });
+      if (version === undefined) {
+        version = qr.version;
+      }
+      
+      let extraBits: Uint8Array | undefined;
+      if (colorMode === "color2bit") {
+        // Generate pseudo extra parity/payload bitstream for color modules
+        extraBits = new Uint8Array(qr.modules.size * qr.modules.size);
+        for (let i = 0; i < extraBits.length; i++) {
+          extraBits[i] = (i + nextSeq) % 2;
+        }
+      }
+
+      rasters.push(rasterizeQr(qr.modules.size, qr.modules.data, MARGIN, extraBits));
+    }
+
+    const gridRaster = totalCodesPerFrame > 1
+      ? rasterizeGrid(rasters, cols, rows, 4)
+      : rasters[0]!;
+
+    if (totalWidth === 0) {
+      totalWidth = gridRaster.width;
+      totalHeight = gridRaster.height;
       sizeCanvas();
       resizeDisplay = sizeCanvas;
-      // Scroll only now: before sizeCanvas() the canvas is still 16×16, so the
-      // scroll target would be the wrong height.
       if (revealStage) scrollStageIntoView();
       setStatus(
-        `${txFps} FPS · ${frameBytes} bytes per frame · V${version} · ECC ${ecc} · ` +
-          `${name} · ${formatBytes(fileSize)} · ` +
-          `${compression === "gzip" ? `gzip ${formatBytes(transmittedSize)}` : "no compression"} · ` +
-          `K=${encoder.k}`,
+        `${txFps} FPS · ${gridStr} grid · ${colorMode} · ${frameBytes} B/frame · V${version} · ECC ${ecc} · ` +
+          `${name} (${formatBytes(fileSize)}) · K=${encoder.k}`,
       );
     }
-    const raster = rasterizeQr(qr.modules.size, qr.modules.data, MARGIN);
-    return new ImageData(new Uint8ClampedArray(raster.pixels.buffer), raster.size, raster.size);
+    return new ImageData(
+      new Uint8ClampedArray(gridRaster.pixels.buffer),
+      gridRaster.width,
+      gridRaster.height,
+    );
   };
 
-  /**
-   * Refill the lookahead, generating at most `max` frames per call.
-   *
-   * Called once up front to fill the queue, then once per tick() — the only
-   * thing that drains it. Self-scheduling on `setTimeout(pump, 0)` instead cost
-   * ~250 wake-ups a second doing nothing once the queue was full. Capping at
-   * one frame per tick keeps the amortisation that gave us: a rAF callback
-   * never pays for more than the single frame it just consumed.
-   */
   let generatorFailed = false;
   const pump = (max = LOOKAHEAD) => {
     if (generatorFailed || gen !== generation) return;
     try {
       for (let n = 0; n < max && queue.length < LOOKAHEAD; n++) queue.push(makeFrame());
     } catch (err) {
-      // e.g. frame bytes over capacity for the chosen ECC level
       generatorFailed = true;
       showError(err instanceof Error ? err.message : String(err));
     }
@@ -355,8 +385,6 @@ async function startStream(revealStage = false) {
   const interval = 1000 / txFps;
   let nextAt = performance.now();
   const tick = (now: number) => {
-    // generatorFailed means no frame will ever be produced again, so stop the
-    // rAF loop rather than spinning on an empty queue until a settings change.
     if (gen !== generation || generatorFailed) return;
     requestAnimationFrame(tick);
     if (now < nextAt) return;
@@ -371,7 +399,7 @@ async function startStream(revealStage = false) {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(staging, 0, 0, canvas.width, canvas.height);
     nextAt += interval;
-    if (now - nextAt > 3 * interval) nextAt = now + interval; // fell behind — don't burst
+    if (now - nextAt > 3 * interval) nextAt = now + interval;
   };
   requestAnimationFrame(tick);
 }

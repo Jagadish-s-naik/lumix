@@ -8,9 +8,13 @@ import { resolve } from "node:path";
 import { MAX_FILE_LABEL } from "./shared/protocol";
 import { MAX_SNIPPET_LABEL } from "./shared/snippet";
 import {
+  COLOR_MODE_OPTIONS,
+  DEFAULT_COLOR_MODE,
   DEFAULT_FRAME_BYTES,
+  DEFAULT_GRID_MODE,
   DEFAULT_TX_FPS,
   FRAME_BYTES_OPTIONS,
+  GRID_MODE_OPTIONS,
   TX_FPS_OPTIONS,
 } from "./shared/send-settings";
 import { htmlTokens } from "./build/html-tokens";
@@ -63,7 +67,7 @@ function buildId(): string {
 }
 
 /** Render a <select>'s options from the canonical lists in send-settings.ts. */
-const selectOptions = (values: readonly number[], selected: number) =>
+const selectOptions = <T extends string | number>(values: readonly T[], selected: T) =>
   values
     .map((v) => (v === selected ? `<option selected>${v}</option>` : `<option>${v}</option>`))
     .join("");
@@ -76,6 +80,8 @@ const TOKENS = {
   OG_IMAGE: new URL("og.png", SITE_URL).href,
   TX_FPS_OPTIONS: selectOptions(TX_FPS_OPTIONS, DEFAULT_TX_FPS),
   FRAME_BYTES_OPTIONS: selectOptions(FRAME_BYTES_OPTIONS, DEFAULT_FRAME_BYTES),
+  GRID_MODE_OPTIONS: selectOptions(GRID_MODE_OPTIONS, DEFAULT_GRID_MODE),
+  COLOR_MODE_OPTIONS: selectOptions(COLOR_MODE_OPTIONS, DEFAULT_COLOR_MODE),
   APP_VERSION: pkg.version,
   BUILD_ID: buildId(),
 };

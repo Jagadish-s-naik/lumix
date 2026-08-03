@@ -21,3 +21,15 @@ export const FRAME_BYTES_OPTIONS: readonly number[] = [
   2331,
   DEFAULT_FRAME_BYTES,
 ];
+
+export type GridMode = "1x1" | "2x1" | "2x2" | "3x2";
+export const DEFAULT_GRID_MODE: GridMode = "1x1";
+export const GRID_MODE_OPTIONS: readonly GridMode[] = ["1x1", "2x1", "2x2", "3x2"];
+
+export type ColorMode = "bw" | "color2bit";
+export const DEFAULT_COLOR_MODE: ColorMode = "bw";
+export const COLOR_MODE_OPTIONS: readonly ColorMode[] = ["bw", "color2bit"];
+
+export type AdaptiveMode = "off" | "adaptive";
+export const DEFAULT_ADAPTIVE_MODE: AdaptiveMode = "off";
+

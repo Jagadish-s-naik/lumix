@@ -22,11 +22,15 @@ ctx.onmessage = async (e: MessageEvent) => {
   const { id, buf, w, h } = e.data as { id: number; buf: ArrayBuffer; w: number; h: number };
   try {
     const img = new ImageData(new Uint8ClampedArray(buf), w, h);
-    const results = await readBarcodes(img, { formats: ["QRCode"], maxNumberOfSymbols: 1 });
-    const r = results.find((x) => x.isValid && x.bytes.length > 0);
-    ctx.postMessage({ id, bytes: r ? r.bytes : null });
+    const results = await readBarcodes(img, { formats: ["QRCode"], maxNumberOfSymbols: 6 });
+    const validResults = results.filter((x) => x.isValid && x.bytes.length > 0);
+    if (validResults.length > 0) {
+      ctx.postMessage({ id, results: validResults.map((r) => r.bytes) });
+    } else {
+      ctx.postMessage({ id, results: [] });
+    }
   } catch {
-    ctx.postMessage({ id, bytes: null });
+    ctx.postMessage({ id, results: [] });
   }
 };
 
