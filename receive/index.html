@@ -63,12 +63,14 @@
         <dialog id="pin-dialog" class="history-dialog">
           <div class="history-dialog-header">
             <h2>Encrypted Payload</h2>
+            <button id="cancel-pin-btn" type="button" class="text-button">Cancel</button>
           </div>
           <p class="hint">Enter the 4-digit PIN displayed on the sender screen to decrypt.</p>
           <div style="display: flex; gap: 10px; margin: 16px 0;">
             <input id="rec-pin-input" type="text" maxlength="6" pattern="[0-9]*" placeholder="Enter PIN" style="font-size: 18px; padding: 8px 12px; width: 140px; background: var(--bg); color: var(--text); border: 1px solid var(--line-bright); border-radius: 6px;" />
             <button id="submit-pin-btn" type="button" class="history-toggle-btn" style="padding: 8px 16px; font-size: 15px;">Decrypt</button>
           </div>
+          <div id="pin-error" class="failed" style="font-size: 13px; margin-top: 4px;" hidden>Invalid PIN. Please try again.</div>
         </dialog>
 
         <!-- Transfer History Drawer Modal -->

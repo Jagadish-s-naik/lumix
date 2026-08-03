@@ -129,12 +129,18 @@ async function start() {
       });
     }
   } catch (err) {
-    const denied = err instanceof DOMException && err.name === "NotAllowedError";
-    offerRetry(
-      denied
-        ? "camera permission denied — allow it, then tap Start camera again."
-        : `camera: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    const isDOMException = err instanceof DOMException;
+    let msg = `camera error: ${err instanceof Error ? err.message : String(err)}`;
+    if (isDOMException) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        msg = "Camera permission denied or blocked — enable camera access in site settings and tap Start camera again.";
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        msg = "Camera is currently in use by another app or tab — close other camera apps and try again.";
+      } else if (err.name === "OverconstrainedError") {
+        msg = "Camera does not support requested resolution or frame rate — try adjusting receive settings.";
+      }
+    }
+    offerRetry(msg);
     return;
   }
 
@@ -163,6 +169,15 @@ async function start() {
   scheduleFrame(captureGen);
   statsTimer = setInterval(updateStats, 500);
   await requestScreenWakeLock();
+
+  // Re-acquire wake lock and resume frame loop on returning from tab background / device sleep
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && !done && stream) {
+      void requestScreenWakeLock();
+      // Ensure frame loop continues if rAF paused
+      scheduleFrame(captureGen);
+    }
+  });
 }
 
 /** Report what the camera actually negotiated — iOS in particular will happily
@@ -316,19 +331,38 @@ async function onDecoded(bytes: Uint8Array) {
     void clearPartialSession(identity);
 
     if (isEncryptedContainer(payload)) {
-      if (pinDialog) {
-        pinDialog.showModal();
+      const cancelPinBtn = document.getElementById("cancel-pin-btn") as HTMLButtonElement | null;
+      const pinError = document.getElementById("pin-error") as HTMLDivElement | null;
+      if (pinError) pinError.hidden = true;
+      if (pinDialog) pinDialog.showModal();
+
+      if (cancelPinBtn) {
+        cancelPinBtn.onclick = () => {
+          pinDialog?.close();
+          offerRetry("Decryption cancelled — restart camera to try again.");
+        };
       }
+
       if (submitPinBtn) {
         submitPinBtn.onclick = async () => {
           const pin = recPinInput?.value.trim() || "";
+          if (!pin) {
+            if (pinError) {
+              pinError.textContent = "Please enter a PIN.";
+              pinError.hidden = false;
+            }
+            return;
+          }
           try {
             const decryptedPayload = await decryptPayload(payload, pin);
             const ok = fnv1a(decryptedPayload) === header.payloadFnv;
             pinDialog?.close();
             void finish(decryptedPayload, ok, seconds);
-          } catch (err) {
-            showError(err instanceof Error ? err.message : String(err));
+          } catch {
+            if (pinError) {
+              pinError.textContent = "Incorrect PIN — decryption failed. Check the PIN on the sender.";
+              pinError.hidden = false;
+            }
           }
         };
       }
