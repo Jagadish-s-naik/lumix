@@ -234,14 +234,28 @@ function captureFrame() {
   pool.submit({ id: frameId++, buf: img.data.buffer, w: vw, h: vh }, [img.data.buffer]);
 }
 
-function onDecoded(bytes: Uint8Array) {
+import { decryptPayload, isEncryptedContainer } from "../shared/crypto";
+import {
+  clearPartialSession,
+  loadPartialSession,
+  savePartialSession,
+} from "../shared/session-storage";
+
+const resumeBanner = document.getElementById("resume-banner");
+const resumePercent = document.getElementById("resume-percent");
+const pinDialog = document.getElementById("pin-dialog") as HTMLDialogElement | null;
+const recPinInput = document.getElementById("rec-pin-input") as HTMLInputElement | null;
+const submitPinBtn = document.getElementById("submit-pin-btn") as HTMLButtonElement | null;
+
+const receivedFramesMap = new Map<string, { seq: number; data: Uint8Array }[]>();
+
+async function onDecoded(bytes: Uint8Array) {
   decodeTimes.push(performance.now());
   const parsed = parseFrame(bytes);
   if (!parsed || done) return;
   const { header, block } = parsed;
   if (noSignal.frameDecoded()) result.replaceChildren();
-  // streamIdentity() covers every header field that has to hold constant, not
-  // just the session id — see the note on it in protocol.ts.
+
   const identity = streamIdentity(header);
   if (!decoder || streamKey !== identity) {
     decoder = new LTDecoder(header.k, header.blockLen, header.sessionId, header.totalLen);
@@ -249,13 +263,78 @@ function onDecoded(bytes: Uint8Array) {
     startTs = performance.now();
     progressEl.style.display = "block";
     progressStatus.style.display = "flex";
+
+    // Check IndexedDB for existing partial session resume
+    const saved = await loadPartialSession(identity);
+    if (saved && saved.frames.length > 0) {
+      let restoredCount = 0;
+      const list: { seq: number; data: Uint8Array }[] = [];
+      for (const item of saved.frames) {
+        const frameBuf = new Uint8Array(item.data);
+        decoder.addFrame(item.seq, frameBuf);
+        list.push({ seq: item.seq, data: frameBuf });
+        restoredCount++;
+      }
+      receivedFramesMap.set(identity, list);
+      const est = estimateTransferProgress(decoder.k, decoder.framesNew, 0.1, decoder.solvedCount);
+      const restoredPercent = Math.round(est.fraction * 100);
+      if (resumeBanner && resumePercent) {
+        resumePercent.textContent = `${restoredPercent}%`;
+        resumeBanner.style.display = "block";
+        setTimeout(() => { resumeBanner.style.display = "none"; }, 5000);
+      }
+    }
   }
+
   decoder.addFrame(header.seq, block);
+  
+  // Track and throttle saving partial session
+  let list = receivedFramesMap.get(identity);
+  if (!list) {
+    list = [];
+    receivedFramesMap.set(identity, list);
+  }
+  list.push({ seq: header.seq, data: block });
+  if (list.length % 5 === 0) {
+    void savePartialSession({
+      sessionId: header.sessionId,
+      identityKey: identity,
+      k: header.k,
+      blockLen: header.blockLen,
+      totalLen: header.totalLen,
+      payloadFnv: header.payloadFnv,
+      frames: list.map((f) => ({ seq: f.seq, data: Array.from(f.data) })),
+      updatedAt: Date.now(),
+    });
+  }
+
   updateProgressEstimate();
 
   if (decoder.isComplete) {
-    const payload = decoder.assemble()!;
+    let payload = decoder.assemble()!;
     const seconds = (performance.now() - startTs) / 1000;
+    void clearPartialSession(identity);
+
+    if (isEncryptedContainer(payload)) {
+      if (pinDialog) {
+        pinDialog.showModal();
+      }
+      if (submitPinBtn) {
+        submitPinBtn.onclick = async () => {
+          const pin = recPinInput?.value.trim() || "";
+          try {
+            const decryptedPayload = await decryptPayload(payload, pin);
+            const ok = fnv1a(decryptedPayload) === header.payloadFnv;
+            pinDialog?.close();
+            void finish(decryptedPayload, ok, seconds);
+          } catch (err) {
+            showError(err instanceof Error ? err.message : String(err));
+          }
+        };
+      }
+      return;
+    }
+
     const ok = fnv1a(payload) === header.payloadFnv;
     void finish(payload, ok, seconds);
   }

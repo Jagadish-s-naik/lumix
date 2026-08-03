@@ -227,6 +227,23 @@ function clearFileInfoCard() {
   cfgFile.value = "";
 }
 
+import { encryptPayload } from "../shared/crypto";
+
+const cfgEncrypt = document.getElementById("cfg-encrypt") as HTMLSelectElement | null;
+const cfgPinContainer = document.getElementById("cfg-pin-container") as HTMLElement | null;
+const cfgPin = document.getElementById("cfg-pin") as HTMLInputElement | null;
+const genPinBtn = document.getElementById("gen-pin-btn") as HTMLButtonElement | null;
+
+cfgEncrypt?.addEventListener("change", () => {
+  if (cfgPinContainer) cfgPinContainer.hidden = cfgEncrypt.value !== "pin";
+  void startStream();
+});
+
+genPinBtn?.addEventListener("click", () => {
+  if (cfgPin) cfgPin.value = Math.floor(1000 + Math.random() * 9000).toString();
+  void startStream();
+});
+
 async function handlePickedFile(file: File): Promise<void> {
   updateFileInfoCard(file.name, file.size, file.type);
   await startSelection(`preparing ${file.name}…`, async () => {
@@ -251,7 +268,14 @@ async function handlePickedFile(file: File): Promise<void> {
       throw new Error(`${file.name} is ${formatBytes(file.size)}, over the ${MAX_FILE_LABEL} limit.`);
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const packed = await packFile(file.name, file.type, bytes);
+    let packed = await packFile(file.name, file.type, bytes);
+    if (cfgEncrypt?.value === "pin" && cfgPin?.value) {
+      const encryptedContainer = await encryptPayload(packed.container, cfgPin.value.trim());
+      packed = {
+        ...packed,
+        container: encryptedContainer,
+      };
+    }
     recordTransferEntry({
       name: file.name,
       size: file.size,
@@ -271,7 +295,14 @@ async function selectFile(): Promise<void> {
 
 async function selectSnippet(): Promise<void> {
   await startSelection("preparing text snippet…", async () => {
-    const packed = await packSnippet(snippetText.value);
+    let packed = await packSnippet(snippetText.value);
+    if (cfgEncrypt?.value === "pin" && cfgPin?.value) {
+      const encryptedContainer = await encryptPayload(packed.container, cfgPin.value.trim());
+      packed = {
+        ...packed,
+        container: encryptedContainer,
+      };
+    }
     recordTransferEntry({
       name: "Text snippet",
       size: packed.originalSize,

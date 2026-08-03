@@ -1049,6 +1049,27 @@ details.settings input[type="range"] {
   border-color: var(--accent);
 }
 
+.pin-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resume-banner {
+  width: min(92vw, 480px);
+  padding: 8px 14px;
+  background: rgba(34, 211, 238, 0.15);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  text-align: center;
+  animation: fadeIn 200ms ease;
+}
+.resume-banner strong {
+  color: var(--accent);
+}
+
 .file-dropzone {
   width: min(92vw, 640px);
   background: var(--panel);

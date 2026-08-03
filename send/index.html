@@ -119,6 +119,20 @@
             </select>
           </label>
           <label>
+            encryption
+            <select id="cfg-encrypt">
+              <option value="off" selected>Off</option>
+              <option value="pin">4-Digit PIN</option>
+            </select>
+          </label>
+          <label id="cfg-pin-container" hidden>
+            PIN Secret
+            <div class="pin-input-group">
+              <input id="cfg-pin" type="text" maxlength="6" pattern="[0-9]*" value="1234" style="width: 80px;" />
+              <button id="gen-pin-btn" type="button" class="history-toggle-btn">Gen</button>
+            </div>
+          </label>
+          <label>
             display size
             <input id="cfg-size" type="range" min="300" max="1200" step="50" value="900" />
           </label>
