@@ -51,7 +51,6 @@ const canvas = document.getElementById("qr") as HTMLCanvasElement;
 const stage = document.getElementById("stage") as HTMLDivElement;
 const specs = document.getElementById("specs")!;
 const cfgFile = document.getElementById("cfg-file") as HTMLInputElement;
-const filePickerLabel = document.getElementById("file-picker-label")!;
 const toolTitle = document.getElementById("tool-title")!;
 const snippetText = document.getElementById("snippet-text") as HTMLTextAreaElement;
 const snippetLabel = document.getElementById("snippet-label")!;
@@ -168,24 +167,118 @@ async function selectDemo(fileName: string): Promise<void> {
   });
 }
 
-async function selectFile(): Promise<void> {
-  const file = cfgFile.files?.[0];
-  if (!file) return;
+import {
+  clearTransferHistory,
+  getTransferHistory,
+  recordTransferEntry,
+} from "../shared/history";
+
+const dropzoneContent = document.getElementById("dropzone-content")!;
+const fileInfoCard = document.getElementById("file-info-card")!;
+const fileInfoName = document.getElementById("file-info-name")!;
+const fileInfoMeta = document.getElementById("file-info-meta")!;
+const fileInfoClear = document.getElementById("file-info-clear")!;
+const stageSeq = document.getElementById("stage-seq");
+
+const historyDialog = document.getElementById("history-dialog") as HTMLDialogElement | null;
+const openHistoryBtn = document.getElementById("open-history") as HTMLButtonElement | null;
+const closeHistoryBtn = document.getElementById("close-history") as HTMLButtonElement | null;
+const clearHistoryBtn = document.getElementById("clear-history") as HTMLButtonElement | null;
+const historyContainer = document.getElementById("history-list-container")!;
+
+function renderHistoryUI() {
+  const history = getTransferHistory();
+  if (history.length === 0) {
+    historyContainer.innerHTML = `<p class="empty-history">No transfer history recorded yet.</p>`;
+    return;
+  }
+  historyContainer.innerHTML = history
+    .map((item) => {
+      const dateStr = new Date(item.timestamp).toLocaleString();
+      const dirBadge = item.direction === "sent" ? "SENT" : "RECEIVED";
+      const statusClass = item.status === "completed" ? "status-ok" : "status-err";
+      return `
+      <div class="history-item">
+        <div class="history-item-top">
+          <span class="history-dir ${item.direction}">${dirBadge}</span>
+          <strong class="history-name">${item.name}</strong>
+        </div>
+        <div class="history-item-sub">
+          <span>${formatBytes(item.size)} · ${item.type || "file"}</span>
+          <span class="${statusClass}">${item.status}</span>
+        </div>
+        <div class="history-item-time">${dateStr}</div>
+      </div>
+    `;
+    })
+    .join("");
+}
+
+function updateFileInfoCard(name: string, size: number, type: string) {
+  fileInfoName.textContent = name;
+  fileInfoMeta.textContent = `${formatBytes(size)} · ${type || "binary"}`;
+  fileInfoCard.hidden = false;
+  dropzoneContent.hidden = true;
+}
+
+function clearFileInfoCard() {
+  fileInfoCard.hidden = true;
+  dropzoneContent.hidden = false;
+  cfgFile.value = "";
+}
+
+async function handlePickedFile(file: File): Promise<void> {
+  updateFileInfoCard(file.name, file.size, file.type);
   await startSelection(`preparing ${file.name}…`, async () => {
     if (file.size === 0) {
+      recordTransferEntry({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        direction: "sent",
+        status: "failed",
+      });
       throw new Error(`${file.name} is empty — there is nothing to send.`);
     }
     if (file.size > MAX_FILE_BYTES) {
+      recordTransferEntry({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        direction: "sent",
+        status: "failed",
+      });
       throw new Error(`${file.name} is ${formatBytes(file.size)}, over the ${MAX_FILE_LABEL} limit.`);
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
-    return { name: file.name, size: file.size, packed: await packFile(file.name, file.type, bytes) };
+    const packed = await packFile(file.name, file.type, bytes);
+    recordTransferEntry({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      direction: "sent",
+      status: "completed",
+    });
+    return { name: file.name, size: file.size, packed };
   });
+}
+
+async function selectFile(): Promise<void> {
+  const file = cfgFile.files?.[0];
+  if (!file) return;
+  await handlePickedFile(file);
 }
 
 async function selectSnippet(): Promise<void> {
   await startSelection("preparing text snippet…", async () => {
     const packed = await packSnippet(snippetText.value);
+    recordTransferEntry({
+      name: "Text snippet",
+      size: packed.originalSize,
+      type: "text/plain",
+      direction: "sent",
+      status: "completed",
+    });
     return { name: "Text snippet", size: packed.originalSize, packed };
   });
 }
@@ -193,7 +286,67 @@ async function selectSnippet(): Promise<void> {
 async function main() {
   snippetText.maxLength = MAX_SNIPPET_BYTES;
   snippetLabel.textContent = `Text to send · up to ${MAX_SNIPPET_LABEL}`;
-  filePickerLabel.textContent = `Any file · up to ${MAX_FILE_LABEL}`;
+
+  // Drag & drop handlers on paneFile
+  paneFile.addEventListener("click", (e) => {
+    if (fileInfoCard.hidden && e.target !== cfgFile) {
+      cfgFile.click();
+    }
+  });
+
+  const preventDefaults = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+    paneFile.addEventListener(eventName, preventDefaults as EventListener, false);
+  });
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    paneFile.addEventListener(
+      eventName,
+      () => paneFile.classList.add("drop-active"),
+      false,
+    );
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    paneFile.addEventListener(
+      eventName,
+      () => paneFile.classList.remove("drop-active"),
+      false,
+    );
+  });
+
+  paneFile.addEventListener("drop", (e: DragEvent) => {
+    const dt = e.dataTransfer;
+    const file = dt?.files[0];
+    if (file) {
+      void handlePickedFile(file);
+    }
+  });
+
+  fileInfoClear.addEventListener("click", (e) => {
+    e.stopPropagation();
+    clearFileInfoCard();
+    applyMode();
+  });
+
+  // History modal handlers
+  openHistoryBtn?.addEventListener("click", () => {
+    renderHistoryUI();
+    historyDialog?.showModal();
+  });
+
+  closeHistoryBtn?.addEventListener("click", () => {
+    historyDialog?.close();
+  });
+
+  clearHistoryBtn?.addEventListener("click", () => {
+    clearTransferHistory();
+    renderHistoryUI();
+  });
 
   if (DEMO) {
     document.querySelector(".mode-badge")!.textContent = "Demo";
@@ -398,6 +551,7 @@ async function startStream(revealStage = false) {
     const ctx = canvas.getContext("2d")!;
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(staging, 0, 0, canvas.width, canvas.height);
+    if (stageSeq) stageSeq.textContent = `Seq: ${nextSeq} · K: ${encoder.k}`;
     nextAt += interval;
     if (now - nextAt > 3 * interval) nextAt = now + interval;
   };

@@ -1034,6 +1034,226 @@ details.settings input[type="range"] {
   color: var(--red);
 }
 
+.history-toggle-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line-bright);
+  color: var(--text-dim);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 130ms ease;
+}
+.history-toggle-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.file-dropzone {
+  width: min(92vw, 640px);
+  background: var(--panel);
+  border: 2px dashed var(--line-bright);
+  border-radius: 12px;
+  padding: 24px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.file-dropzone:hover,
+.file-dropzone.drop-active {
+  border-color: var(--accent);
+  background: var(--panel-strong);
+}
+.dropzone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.dropzone-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+}
+.dropzone-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.dropzone-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+.file-input-hidden {
+  display: none;
+}
+.file-info-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line-bright);
+  border-radius: 8px;
+}
+.file-info-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.file-info-details strong {
+  color: var(--text);
+  font-size: 14px;
+}
+.file-info-details span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.file-clear-btn {
+  padding: 4px 8px;
+  font-size: 14px;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  cursor: pointer;
+}
+.file-clear-btn:hover {
+  color: var(--red);
+}
+
+.stage-seq-counter {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted-dim);
+  text-align: center;
+}
+
+/* Two-stage progress stepper */
+.progress-stage-stepper {
+  width: min(92vw, 480px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.stepper-step {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.stepper-step.active {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.stepper-arrow {
+  color: var(--muted-dim);
+}
+
+/* History Modal */
+.history-dialog {
+  width: min(92vw, 540px);
+  max-height: 80vh;
+  padding: 20px;
+  background: var(--panel);
+  border: 1px solid var(--line-bright);
+  border-radius: 12px;
+  color: var(--text);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.history-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+.history-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.history-dialog-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+.history-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.empty-history {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.history-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.history-dir {
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+}
+.history-dir.sent {
+  background: rgba(129, 140, 248, 0.2);
+  color: var(--accent-secondary);
+}
+.history-dir.received {
+  background: rgba(34, 211, 238, 0.2);
+  color: var(--accent);
+}
+.history-name {
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-item-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.history-item-time {
+  font-size: 10px;
+  color: var(--muted-dim);
+}
+.status-ok {
+  color: var(--green);
+}
+.status-err {
+  color: var(--red);
+}
+.history-dialog-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 680px) {
   .site-header {
     min-height: 50px;
@@ -1042,7 +1262,6 @@ details.settings input[type="range"] {
   .header-note {
     display: none;
   }
-  /* The full name plus the mode badge share ~320px on the smallest phones. */
   .brand {
     gap: 8px;
     font-size: 11px;
@@ -1062,7 +1281,6 @@ details.settings input[type="range"] {
   .hero-copy {
     margin-top: 16px;
   }
-  /* Cards stay side by side on phones; everything inside scales to fit. */
   .transfer-grid {
     gap: 10px;
   }
@@ -1081,9 +1299,6 @@ details.settings input[type="range"] {
     margin-bottom: 8px;
     font-size: clamp(17px, 5vw, 24px);
   }
-  /* The cards stay two-up on a phone, so the body copy ends up three words to
-     a line and reads worse than nothing. The kicker and heading already say
-     which side you are on, which is the only decision this screen asks for. */
   .transfer-card p:not(.card-kicker) {
     display: none;
   }

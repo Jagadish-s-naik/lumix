@@ -8,6 +8,7 @@
 // - Progress must track frames COLLECTED: LT peeling back-loads its solve
 //   cascade, so blocks-solved looks stalled and then teleports to done.
 
+import { formatBytes } from "../shared/format";
 import { LTDecoder } from "../shared/fountain";
 import {
   estimateTransferProgress,
@@ -260,8 +261,67 @@ function onDecoded(bytes: Uint8Array) {
   }
 }
 
+import {
+  clearTransferHistory,
+  getTransferHistory,
+  recordTransferEntry,
+} from "../shared/history";
+
+const stageStepper = document.getElementById("stage-stepper");
+const stepCollect = document.getElementById("step-collect");
+const stepReconstruct = document.getElementById("step-reconstruct");
+
+const historyDialog = document.getElementById("history-dialog") as HTMLDialogElement | null;
+const openHistoryBtn = document.getElementById("open-history") as HTMLButtonElement | null;
+const closeHistoryBtn = document.getElementById("close-history") as HTMLButtonElement | null;
+const clearHistoryBtn = document.getElementById("clear-history") as HTMLButtonElement | null;
+const historyContainer = document.getElementById("history-list-container")!;
+
+function renderHistoryUI() {
+  const history = getTransferHistory();
+  if (history.length === 0) {
+    historyContainer.innerHTML = `<p class="empty-history">No transfer history recorded yet.</p>`;
+    return;
+  }
+  historyContainer.innerHTML = history
+    .map((item) => {
+      const dateStr = new Date(item.timestamp).toLocaleString();
+      const dirBadge = item.direction === "sent" ? "SENT" : "RECEIVED";
+      const statusClass = item.status === "completed" ? "status-ok" : "status-err";
+      return `
+      <div class="history-item">
+        <div class="history-item-top">
+          <span class="history-dir ${item.direction}">${dirBadge}</span>
+          <strong class="history-name">${item.name}</strong>
+        </div>
+        <div class="history-item-sub">
+          <span>${formatBytes(item.size)} · ${item.type || "file"}</span>
+          <span class="${statusClass}">${item.status}</span>
+        </div>
+        <div class="history-item-time">${dateStr}</div>
+      </div>
+    `;
+    })
+    .join("");
+}
+
+openHistoryBtn?.addEventListener("click", () => {
+  renderHistoryUI();
+  historyDialog?.showModal();
+});
+
+closeHistoryBtn?.addEventListener("click", () => {
+  historyDialog?.close();
+});
+
+clearHistoryBtn?.addEventListener("click", () => {
+  clearTransferHistory();
+  renderHistoryUI();
+});
+
 function updateProgressEstimate() {
   if (!decoder) return;
+  if (stageStepper) stageStepper.style.display = "flex";
   const elapsed = Math.max(0, (performance.now() - startTs) / 1000);
   const estimate = estimateTransferProgress(
     decoder.k,
@@ -273,15 +333,28 @@ function updateProgressEstimate() {
   const shownPercent = percent < 10 ? percent.toFixed(1) : percent.toFixed(0);
   bar.style.width = `${percent.toFixed(1)}%`;
   progressEl.setAttribute("aria-valuenow", String(Math.floor(percent)));
+
+  const isReconstructing = estimate.phase === "decoding" || decoder.solvedCount >= decoder.k * 0.9;
+  if (stepCollect && stepReconstruct) {
+    if (isReconstructing) {
+      stepCollect.classList.remove("active");
+      stepReconstruct.classList.add("active");
+    } else {
+      stepCollect.classList.add("active");
+      stepReconstruct.classList.remove("active");
+    }
+  }
+
+  const phaseLabel = isReconstructing ? "Reconstructing file" : "Collecting blocks";
   progressLabel.textContent =
-    `${shownPercent}% · ${decoder.solvedCount}/${decoder.k} blocks`;
-  // Held back for the first few frames — a two-frame sample reads wildly wrong.
+    `${shownPercent}% · ${decoder.solvedCount}/${decoder.k} blocks · ${phaseLabel}`;
+
   const rate = decoder.framesNew >= 4 ? ` · ${goodputKbs(elapsed).toFixed(1)} KB/s` : "";
   etaLabel.textContent =
     (estimate.etaSeconds === undefined
-      ? estimate.phase === "decoding"
-        ? `${decoder.framesNew} frames · decoding`
-        : "Estimating time…"
+      ? isReconstructing
+        ? `${decoder.framesNew} frames · solving system`
+        : "Collecting fountain frames…"
       : `About ${formatDuration(estimate.etaSeconds)} · ${decoder.framesNew} frames`) + rate;
 }
 
@@ -301,9 +374,6 @@ function goodputKbs(elapsed: number): number {
 async function finish(container: Uint8Array, hashOk: boolean, seconds: number) {
   done = true;
   captureGen++;
-  // Tear the whole capture pipeline down: the camera, the stats timer, and the
-  // decode pool. Each worker holds its own ~940 KB zxing WASM instance, which
-  // is worth reclaiming on a phone the moment the last frame is in.
   stream?.getTracks().forEach((t) => t.stop());
   clearInterval(statsTimer);
   statsTimer = undefined;
@@ -317,10 +387,18 @@ async function finish(container: Uint8Array, hashOk: boolean, seconds: number) {
     const file = await unpackFile(container);
     if (!(await verifyFile(file))) throw new Error("The recovered file failed SHA-256 verification.");
 
-    // The container carries its own media type, so the receiver never has to be
-    // told in advance whether a file or a text snippet is coming.
     const rate = (container.length / 1024 / seconds).toFixed(1);
     const gzipNote = file.compression === "gzip" ? "gzip decompressed · " : "";
+
+    recordTransferEntry({
+      name: file.name,
+      size: file.bytes.length,
+      type: file.type,
+      direction: "received",
+      status: "completed",
+      goodputKbs: Number(rate),
+    });
+
     if (isSnippet(file)) {
       progressLabel.textContent = "100% · text recovered";
       setStatus(`text in ${seconds.toFixed(1)} s · ${rate} KB/s · ${gzipNote}SHA-256 verified ✓`);

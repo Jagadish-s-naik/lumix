@@ -24,14 +24,22 @@
             <p class="eyebrow">Camera → device</p>
             <h1>Receive</h1>
           </div>
+          <div class="heading-actions">
+            <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
+          </div>
           <div class="hint status-line" id="stats">Ready to scan a file or text stream</div>
         </div>
         <button id="start">Start camera</button>
         <div class="preview" id="preview" style="display: none">
           <video id="video" muted playsinline></video>
           <div class="transfer-hud">
+            <div class="progress-stage-stepper" id="stage-stepper" style="display: none">
+              <span class="stepper-step active" id="step-collect">1. Collecting blocks</span>
+              <span class="stepper-arrow">→</span>
+              <span class="stepper-step" id="step-reconstruct">2. Reconstructing file</span>
+            </div>
             <div class="progress-status" id="progress-status" style="display: none" aria-live="polite">
-              <strong id="progress-label">0% · 0 frames</strong>
+              <strong id="progress-label">0% · 0/0 blocks</strong>
               <span id="eta-label">Estimating time…</span>
             </div>
             <div
@@ -47,6 +55,20 @@
           </div>
         </div>
         <div id="result"></div>
+
+        <!-- Transfer History Drawer Modal -->
+        <dialog id="history-dialog" class="history-dialog">
+          <div class="history-dialog-header">
+            <h2>Transfer History</h2>
+            <button id="close-history" type="button" class="text-button">Close</button>
+          </div>
+          <div id="history-list-container" class="history-list-container">
+            <p class="empty-history">No transfer history recorded yet.</p>
+          </div>
+          <div class="history-dialog-footer">
+            <button id="clear-history" type="button" class="secondary-button">Clear history</button>
+          </div>
+        </dialog>
         <details class="settings diagnostics" id="diagnostics" style="display: none">
           <summary>Live diagnostics</summary>
           <div class="metrics" id="metrics" style="display: none">
