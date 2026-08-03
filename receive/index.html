@@ -27,15 +27,15 @@
           <div class="heading-actions">
             <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
           </div>
-          <div class="hint status-line" id="stats">Ready to scan a file or text stream</div>
+          <div class="hint status-line" id="stats" aria-live="polite">Ready to scan a file or text stream</div>
         </div>
         <button id="start">Start camera</button>
-        <div class="preview" id="preview" style="display: none">
-          <video id="video" muted playsinline></video>
+        <div class="preview" id="preview" style="display: none" role="region" aria-label="Camera scanning viewport">
+          <video id="video" muted playsinline aria-label="Live camera scanning feed"></video>
           <div class="transfer-hud">
-            <div class="progress-stage-stepper" id="stage-stepper" style="display: none">
+            <div class="progress-stage-stepper" id="stage-stepper" style="display: none" aria-label="Two-stage recovery progress">
               <span class="stepper-step active" id="step-collect">1. Collecting blocks</span>
-              <span class="stepper-arrow">→</span>
+              <span class="stepper-arrow" aria-hidden="true">→</span>
               <span class="stepper-step" id="step-reconstruct">2. Reconstructing file</span>
             </div>
             <div class="progress-status" id="progress-status" style="display: none" aria-live="polite">
@@ -54,32 +54,32 @@
             ><div id="bar"></div></div>
           </div>
         </div>
-        <div id="resume-banner" class="resume-banner" style="display: none;">
+        <div id="resume-banner" class="resume-banner" style="display: none;" aria-live="polite">
           <span>Resuming transfer — <strong id="resume-percent">0%</strong> already collected</span>
         </div>
-        <div id="result"></div>
+        <div id="result" aria-live="polite"></div>
 
         <!-- Decryption PIN Input Dialog -->
-        <dialog id="pin-dialog" class="history-dialog">
+        <dialog id="pin-dialog" class="history-dialog" aria-labelledby="pin-dialog-title">
           <div class="history-dialog-header">
-            <h2>Encrypted Payload</h2>
-            <button id="cancel-pin-btn" type="button" class="text-button">Cancel</button>
+            <h2 id="pin-dialog-title">Encrypted Payload</h2>
+            <button id="cancel-pin-btn" type="button" class="text-button" aria-label="Cancel decryption">Cancel</button>
           </div>
           <p class="hint">Enter the 4-digit PIN displayed on the sender screen to decrypt.</p>
           <div style="display: flex; gap: 10px; margin: 16px 0;">
-            <input id="rec-pin-input" type="text" maxlength="6" pattern="[0-9]*" placeholder="Enter PIN" style="font-size: 18px; padding: 8px 12px; width: 140px; background: var(--bg); color: var(--text); border: 1px solid var(--line-bright); border-radius: 6px;" />
+            <input id="rec-pin-input" type="text" maxlength="6" pattern="[0-9]*" placeholder="Enter PIN" aria-label="Enter 4-digit decryption PIN" style="font-size: 18px; padding: 8px 12px; width: 140px; background: var(--bg); color: var(--text); border: 1px solid var(--line-bright); border-radius: 6px;" />
             <button id="submit-pin-btn" type="button" class="history-toggle-btn" style="padding: 8px 16px; font-size: 15px;">Decrypt</button>
           </div>
-          <div id="pin-error" class="failed" style="font-size: 13px; margin-top: 4px;" hidden>Invalid PIN. Please try again.</div>
+          <div id="pin-error" class="failed" style="font-size: 13px; margin-top: 4px;" hidden aria-live="assertive">Invalid PIN. Please try again.</div>
         </dialog>
 
         <!-- Transfer History Drawer Modal -->
-        <dialog id="history-dialog" class="history-dialog">
+        <dialog id="history-dialog" class="history-dialog" aria-labelledby="rec-history-title">
           <div class="history-dialog-header">
-            <h2>Transfer History</h2>
-            <button id="close-history" type="button" class="text-button">Close</button>
+            <h2 id="rec-history-title">Transfer History</h2>
+            <button id="close-history" type="button" class="text-button" aria-label="Close transfer history">Close</button>
           </div>
-          <div id="history-list-container" class="history-list-container">
+          <div id="history-list-container" class="history-list-container" role="region" aria-label="Saved transfer entries">
             <p class="empty-history">No transfer history recorded yet.</p>
           </div>
           <div class="history-dialog-footer">

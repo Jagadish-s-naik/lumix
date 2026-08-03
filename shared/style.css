@@ -63,8 +63,14 @@ button:hover {
   background: var(--accent-hi);
 }
 
-button:focus-visible {
-  outline: 2px solid var(--text);
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.file-dropzone:focus-visible,
+.history-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 /* Author `display` rules beat the UA sheet's [hidden], so restate it. */
@@ -297,7 +303,7 @@ details.settings input[type="range"] {
   --text: #F1F5F9;
   --text-dim: #CBD5E1;
   --muted: #94A3B8;
-  --muted-dim: #64748B;
+  --muted-dim: #78889E;
   --accent: #22D3EE;
   --accent-hi: #67E8F9;
   --accent-secondary: #818CF8;
@@ -1376,5 +1382,16 @@ details.settings input[type="range"] {
     width: auto;
     height: calc(100dvh - 108px);
     max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

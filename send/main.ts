@@ -318,9 +318,16 @@ async function main() {
   snippetText.maxLength = MAX_SNIPPET_BYTES;
   snippetLabel.textContent = `Text to send · up to ${MAX_SNIPPET_LABEL}`;
 
-  // Drag & drop handlers on paneFile
+  // Drag & drop & keyboard activation handlers on paneFile
   paneFile.addEventListener("click", (e) => {
     if (fileInfoCard.hidden && e.target !== cfgFile) {
+      cfgFile.click();
+    }
+  });
+
+  paneFile.addEventListener("keydown", (e: KeyboardEvent) => {
+    if ((e.key === "Enter" || e.key === " ") && fileInfoCard.hidden) {
+      e.preventDefault();
       cfgFile.click();
     }
   });
