@@ -1,212 +1,107 @@
 # Lumix: fountain-coded QR file transfer
 
-Send a file between two devices using nothing but a **screen and a camera**.
-One page displays the file as an endless stream of animated QR codes; another
-device points its camera at it and reconstructs the file. **No network path
-between the devices, no app, no pairing, no permissions beyond the camera.**
-The payload travels as light.
+Send a file or text between two devices using nothing but a **screen and a camera**.
+One page displays the payload as an endless stream of animated QR codes; another
+device points its camera at it and reconstructs the data. **No network path
+between the devices, no app installation required, no pairing, no permissions beyond the camera.**
+The payload travels purely as light.
 
-**Live placeholder at [lumix.app](https://lumix.app/)** — open it on both devices and
-go. Works offline after the first visit.
+**Live at [lumix.app](https://lumix.app/)** — open it on both devices and
+go. Works offline after the first visit and can be installed as a PWA.
 
-This is a minimal proof of concept extracted from a larger
-experiment that reached **128 KB/s phone-to-phone** with denser frames,
-multi-code grids, and an error-corrected color channel. This version accepts
-arbitrary files up to 64 MB, preserves their filename and media type inside
-the fountain stream, adaptively uses gzip only when it shrinks the optical
-payload, and verifies SHA-256 before offering the received file for download.
-The sender can also stream a pasted text snippet instead of a file; the
-receiver works out which one is arriving from the container's media type.
+Lumix uses Luby transform (LT) fountain coding to pack arbitrary files up to 64 MB (or text snippets), preserving filename and media type metadata inside the optical container. It adaptively uses gzip when it shrinks the optical payload, renders high-density frames with multi-code grid layouts and an error-corrected color channel, and verifies SHA-256 integrity before offering the received file for download.
 
 <p align="center">
   <img src="docs/receiving.jpg" width="420"
-       alt="Phone receiving a 2 MB image over light: 129.2 KB/s goodput, decoding the sender's animated QR code" />
+       alt="Phone receiving a 2 MB image over light: decoding the sender's animated QR code" />
 </p>
-<p align="center"><em>Mid-transfer: a phone pulling a 2 MB image out of the air at 129 KB/s.</em></p>
+<p align="center"><em>Mid-transfer: a phone pulling data out of the air.</em></p>
 
-## Try it
+## Features
 
-The hosted site is targeted for [lumix.app](https://lumix.app/); everything
-below is for running it yourself.
+- **High-Throughput Optical Pipeline**: Denser QR frames (up to Version 40), multi-code grid layouts (1x1, 2x1, 2x2, 3x2), 2-bit error-corrected color rendering, and optional auto-backoff adaptive density.
+- **Accurate Two-Stage Progress Reporting**: Replaces misleading linear bars with an honest two-stage stepper (`1. Collecting blocks` → `2. Reconstructing file`), real-time unique block collection tracking, and live ETA estimation.
+- **Resume-on-Drop**: Interrupted transfers (camera focus loss, tab backgrounding, app switching) automatically resume from IndexedDB local block storage when re-scanning the same session.
+- **End-to-End Payload Encryption**: Optional 4-digit PIN / passphrase encryption using Web Crypto API (`AES-GCM` with `PBKDF2` key derivation, 100,000 iterations) encrypts data *before* fountain chunking.
+- **Client-Side Transfer History**: Local storage drawer logging up to 50 recent transfer entries (filename, size, type, timestamp, direction, completion status).
+- **Progressive Web App (PWA) & Standalone**: Full offline service worker precaching, native PWA install prompt (`beforeinstallprompt`), iOS standalone meta-tags, and single-file zero-dependency offline builds (`dist-standalone/`).
+- **Observability & Diagnostics**: Collapsible live diagnostics panel surfacing capture FPS, decode FPS, goodput (KB/s), decode success rate (%), and fountain block metrics.
+
+---
+
+## Threat Model & Payload Encryption
+
+Lumix includes optional PIN-based payload encryption on the Send screen.
+
+### What Encryption Protects Against
+- **Optical Interception**: Prevents unauthorized cameras or onlookers from reading or reconstructing the file/text if they record the animated QR stream from a distance or via reflections. Without the 4-digit PIN, the optical stream is cryptographically unreadable.
+
+### What Encryption Does NOT Protect Against
+- **Shoulder-Surfing / Physical PIN Exposure**: Anyone who can visually see both the sending screen (where the PIN is set/generated) and the QR code can enter the PIN on their own receiving device.
+- **Sender Device Compromise**: Unencrypted file data on the sending machine before transmission remains subject to local device security.
+
+---
+
+## Resume-on-Drop & Session Lifecycle
+
+Lumix automatically persists received fountain blocks in browser IndexedDB (`lumix_resume_db`) keyed by stream identity (`sessionId:k:blockLen:totalLen:payloadFnv`).
+
+- **Same Session Reconnect**: If a receiving phone loses signal, backgrounded tabs are suspended, or the tab reloads mid-transfer, re-scanning the ongoing sender stream re-locks onto the saved session, displays a *"Resuming transfer — X% already collected"* banner, and continues without losing progress.
+- **Sender Restart (New Session)**: If the sender configuration or file changes, a new `sessionId` is generated. The receiver detects the stream identity change, cleanly starts a fresh collection session, and leaves existing storage uncorrupted.
+- **Completion & Invalidation**: IndexedDB state for the active stream is automatically cleared as soon as file reassembly and SHA-256 verification complete or upon explicit cancellation.
+
+---
+
+## Try It
+
+The hosted site is targeted for [lumix.app](https://lumix.app/); everything below is for running it yourself.
 
 ```bash
 npm install
-npm run dev               # dev server with HMR
+npm run dev               # dev server with basic SSL (HTTPS)
 npm run serve             # build, then serve the production bundle
-npm run demo              # demo mode: only the bundled payloads can be sent
-npm test                  # golden wire-format vectors and unit tests
-npm run build             # the hosted site → dist/
-npm run build:standalone  # both self-contained pages → dist-standalone/
-npm run build:all         # everything
+npm run demo              # demo mode: locked to bundled payloads
+npm test                  # unit test suite and golden wire vectors
+npm run build             # build production site → dist/
+npm run build:standalone  # build zero-dependency standalone HTML files → dist-standalone/
+npm run build:all         # build both hosted site and standalone files
 ```
 
-`npm run demo` locks the sender to the two bundled images — no file picker, no
-text box. Use it when the sending machine is going to sit unattended in front
-of people, so nobody can browse the host's filesystem through the picker. It
-runs the dev server with `VITE_DEMO=1`, which swaps the sender's controls for
-the demo payload buttons and never wires up the file input. Note that this is
-the dev server, not a hardened kiosk: the picker markup is still in the DOM
-(inert, and hidden), and anyone with the machine's keyboard has devtools.
+`npm run demo` locks the sender to bundled images — no file picker or text box — ideal for unattended kiosk displays.
 
-- On the **sending** device (a laptop is ideal): open
-  `https://localhost:5173/send/`, choose a file, and it starts streaming. Max
-  screen brightness helps.
-- On the **receiving** device (a phone): open the `Network` URL Vite prints
-  (`https://<lan-ip>:5173/receive/`), accept the certificate warning once,
-  tap **Start camera**, and point it at the code.
-- When recovery completes, save the received file after its SHA-256 check
-  passes.
-- To send text instead, flip the sender to **Text snippet** and paste into the
-  box. The receiver is the same page either way — nothing is stored, the text
-  is shown with a copy button and is gone when you close the tab.
+- On the **sending** device: open `https://localhost:5173/send/`, select a file or type a text snippet. Max screen brightness helps.
+- On the **receiving** device: open `https://<lan-ip>:5173/receive/`, accept the self-signed certificate once, tap **Start camera**, and point at the screen.
+- Upon completion, file integrity is verified via SHA-256 before download.
 
-Neither mode is encrypted: whatever is on the sending screen is readable by
-any camera pointed at it. The property this gives you is no network, not
-confidentiality.
+---
 
-## Ways to run it
+## Ways to Run It
 
-Three shapes, all built from the same source.
-
-| | what it is | needs a server? | offline |
+| Mode | Description | Server Needed? | Offline Access |
 |---|---|---|---|
-| **Hosted site** | the three pages, plus a service worker — live at [lumix.app](https://lumix.app/) | yes, any static host | after the first visit |
-| **`lumix-sender.html`** | one file, ~55 KB | no | always |
-| **`lumix-receiver.html`** | one file, ~1.3 MB | see below | always |
+| **Hosted PWA** | Three pages + Service Worker precaching — live at [lumix.app](https://lumix.app/) | Yes (static host) | After first visit / Installed PWA |
+| **`lumix-sender.html`** | Single self-contained HTML file (~70 KB) | No | Always (`file://` or HTTP) |
+| **`lumix-receiver.html`** | Single self-contained HTML file (~1.3 MB, includes ZXing WASM) | HTTP server recommended | Always (after HTTP load) |
 
-Built artifacts for all three are attached to every release.
+*Note: iOS Safari and Android Chrome require HTTPS or a local HTTP server for `getUserMedia` camera permissions; opening `lumix-receiver.html` directly from a local `file://` URI on mobile browsers will block camera access.*
 
-### Hosted site, offline afterwards
+---
 
-The built site registers a service worker that precaches every page, the
-decoder wasm included. Load it once over the network, then add it to your home
-screen: it opens and transfers with the network off. This is the one to use on
-a phone — it keeps a real `https://` origin, which is what the camera wants.
+## Diagnostics & Observability
 
-Any of the three pages will do it — the registration is rooted at the site, not
-at the page, so landing straight on `/receive/` from a shared link caches the
-whole thing just as visiting the home page does.
+Both pages include collapsible **Settings** and **Live Diagnostics** panels:
+- **Sender Settings**: FPS control (10–120), Bytes per frame (200–2953), Grid layout mode (1x1 to 3x2), Color mode (B&W or 2-bit Color), Adaptive Density auto-backoff, ECC level (L/M/Q/H), and Encryption PIN generator.
+- **Receiver Diagnostics**: Displays live metrics for Capture FPS, Decode FPS, Goodput (KB/s), Decode Success Rate (%), Elapsed Time, Unique/Duplicate Frame counts, and Fountain Block parameters ($K$, block length, total payload).
 
-### Standalone files
+---
 
-`npm run build:standalone` produces two pages with nothing external in them at
-all: no `<script src>`, no stylesheet link, no fetch. The receiver carries the
-940 KB decoder wasm as a `data:` URI and its decode worker as a base64 blob
-URL, which is why it is 1.3 MB. Mail one to someone, drop it on a USB stick,
-open it — no install, no server, no network.
+## How It Works
 
-**The receiver has one real caveat.** Opening it from `file://` gives the page
-an opaque origin. `file://` counts as a secure context, so `navigator.media
-Devices` exists and nothing *looks* wrong, but the camera permission is keyed
-to that origin — desktop Chrome and Firefox will generally prompt and work,
-while **iOS Safari and Android Chrome opening a local file will not give you a
-camera.** Since the receiver is usually the phone, that matters. Serve the file
-over http(s) from anything, or use the hosted site's offline mode instead.
+1. **Luby Transform Fountain Coding**: Each frame is the XOR sum of a pseudorandom subset of blocks chosen via a robust-soliton distribution. The receiver collects any $\sim K \cdot 1.15$ distinct frames in any order to decode the full payload.
+2. **Self-Describing Frame Headers**: 20-byte packed header carrying session ID, sequence number, block count/length, file length, and FNV-1a checksum.
+3. **WASM Decode Pipeline**: Multi-symbol barcode scanning powered by `zxing-cpp` compiled to WebAssembly, running inside dedicated worker threads fed by `requestVideoFrameCallback`.
 
-The sender has no such problem — canvas and QR generation only. It works from
-`file://` everywhere.
-
-### Deploying
-
-The site build uses `base: "./"`, so it works under a project subpath
-(`user.github.io/repo/`) with no configuration.
-
-**Why the dev server is https-only:** the receiver uses `getUserMedia`, and
-browsers remove that API entirely on insecure origins: a phone reaching
-your dev server over plain http has no camera, full stop (`localhost` is
-exempt, but your phone isn't localhost). That's a web platform rule, not a
-choice. The dev server therefore ships with a self-signed certificate
-(`@vitejs/plugin-basic-ssl`); the browser will warn on first visit. Tap
-"Show Details" then "visit this website" (iOS) or "Advanced" then "Proceed"
-(Android/desktop), and the page is still a secure context, so the camera
-works. The odd-looking `lvh.me` hosts Vite prints are a public convenience
-domain that resolves to 127.0.0.1 (same machine, nothing extra running).
-
-Hold the phone steady, or better, prop it against something. Camera
-autofocus hunting from hand tremor is the #1 throughput killer.
-
-## How it works
-
-**The one-way channel problem.** A screen-to-camera link has no back-channel:
-the receiver can't ask for retransmission, and it will inevitably miss frames
-(blur, refresh straddling, autofocus). Looping the frames and hoping is
-miserable: miss one frame and you wait a full cycle for it to come around.
-
-**Fountain codes fix this completely.** The sender never sends the file's
-blocks directly. Each frame is the XOR of a pseudorandom *subset* of blocks;
-the subset is derived deterministically from the frame's sequence number,
-with subset sizes drawn from a robust-soliton distribution ([Luby transform
-coding](https://en.wikipedia.org/wiki/Luby_transform_code)). The receiver
-collects **any** ~K·1.15 distinct frames, in any order, and peels the file
-out of them. Dropped frames cost a little time, never correctness. Sender
-and receiver frame rates don't need to match at all.
-
-**Every frame is self-describing.** A 20-byte header carries the session id,
-sequence number, block count/size, file length, and a hash. There is no
-handshake: the receiver locks onto a stream mid-flight, and restarting the
-sender (new session id) automatically resets the receiver.
-
-**Decoding.** Safari has never shipped `BarcodeDetector` (WebKit bug 281848),
-so decoding is [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) compiled
-to WASM, running in workers fed by `requestVideoFrameCallback`. Busy workers
-mean dropped frames, which the fountain happily absorbs.
-
-## Hard-won details baked into this PoC
-
-- **JS engines disagree about `Math.log`** (it's implementation-approximated).
-  Sender and receiver must build bit-identical soliton distributions, so
-  `fountain.ts` includes a deterministic log built from exactly-specified
-  IEEE-754 ops. V8 vs JavaScriptCore desync is a silent, total failure mode.
-- **iOS lies about camera frame rate.** `frameRate: {ideal: 60}` silently
-  delivers 30; you must demand `{exact: 60}` (works at 1280-wide capture)
-  and fall back. Always read back `getSettings()`.
-- **`requestVideoFrameCallback` chains outlive their stream** and resume on
-  the next one; without a generation counter, every stop/start leaks a
-  zombie capture loop.
-- **Progress bars must track frames collected, not blocks solved.** LT
-  peeling back-loads its solve cascade: block-count progress looks stalled
-  for most of the transfer, then teleports to 100%. The receiver estimates
-  remaining time from its observed unique-frame rate. A hybrid of incoming
-  frames and actually decoded blocks keeps the bar moving through redundancy;
-  only verified completion reaches 100%.
-- **QR error correction is set to the minimum (L).** In-frame ECC and the
-  fountain layer solve different problems (corruption vs erasure), but at
-  these frame sizes level L plus frame disposal is the better trade.
-
-## Tuning
-
-Both pages have a collapsed **Settings** panel. On the sender: tx fps, bytes
-per frame, error-correction level, and display size. Changing anything
-restarts the stream, and the receiver resets automatically off the new
-session id. On the receiver: capture width, capture fps, and decode worker
-count, applied live while the camera runs — a device that refuses a live
-reconfigure (iOS, sometimes) keeps the current stream and says so.
-
-| setting | default | notes |
-|---|---|---|
-| tx fps | 60 | tuned for goodput on a 120 Hz sender; on a 60 Hz screen each frame owns a single refresh, so drop to 24–30 if the receiver stalls |
-| bytes / frame | 2953 (QR v40) | the density ceiling. Great phone-to-phone at close range; back off to 1465 (v27) for arbitrary monitors or a distant camera |
-
-The defaults are set for the best-case demo rather than the safest handshake.
-If a transfer crawls, the two things to try first are dropping bytes/frame to
-1465 and tx fps to 24.
-
-The parent experiment's measured ceiling with this exact architecture plus
-denser frames, a 120 fps ProMotion sender, and stacked codes: ~128 KB/s
-handheld, ~186 KB/s propped.
-
-## Similar projects
-
-- [mohankumarelec/airgapped-qr-code-transfer](https://github.com/mohankumarelec/airgapped-qr-code-transfer):
-  browser-based QR file transfer with compression and sequential chunking.
-- [divan/txqr](https://github.com/divan/txqr) (2018): animated QR plus
-  fountain codes in Go, with two excellent write-ups on why fountain coding
-  beats sequential looping.
-- [sz3/libcimbar](https://github.com/sz3/libcimbar): goes past QR entirely
-  with a custom high-density color code purpose-built for this channel.
-
-Built with [node-qrcode](https://github.com/soldair/node-qrcode) and
-[zxing-wasm](https://github.com/Sec-ant/zxing-wasm).
+---
 
 ## License
 
