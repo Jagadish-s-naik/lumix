@@ -39,6 +39,11 @@ const diagnosticsEl = document.getElementById("diagnostics") as HTMLDetailsEleme
 const cfgWidth = document.getElementById("cfg-width") as HTMLSelectElement;
 const cfgCapFps = document.getElementById("cfg-capfps") as HTMLSelectElement;
 const cfgWorkers = document.getElementById("cfg-workers") as HTMLSelectElement;
+if (cfgWorkers && typeof navigator !== "undefined" && navigator.hardwareConcurrency) {
+  const cores = Math.min(Math.max(1, navigator.hardwareConcurrency), 16);
+  const match = [...cfgWorkers.options].find((opt) => Number(opt.value) === cores);
+  if (match) cfgWorkers.value = String(cores);
+}
 const cameraActual = document.getElementById("camera-actual")!;
 const metric = (id: string) => document.getElementById(id)!;
 

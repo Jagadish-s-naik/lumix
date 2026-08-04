@@ -26,9 +26,9 @@ export type GridMode = "1x1" | "2x1" | "2x2" | "3x2" | "3x3";
 export const DEFAULT_GRID_MODE: GridMode = "1x1";
 export const GRID_MODE_OPTIONS: readonly GridMode[] = ["1x1", "2x1", "2x2", "3x2", "3x3"];
 
-export type ColorMode = "bw" | "color2bit";
+export type ColorMode = "bw" | "color2bit" | "rgb";
 export const DEFAULT_COLOR_MODE: ColorMode = "bw";
-export const COLOR_MODE_OPTIONS: readonly ColorMode[] = ["bw", "color2bit"];
+export const COLOR_MODE_OPTIONS: readonly ColorMode[] = ["bw", "color2bit", "rgb"];
 
 export type AdaptiveMode = "off" | "adaptive";
 export const DEFAULT_ADAPTIVE_MODE: AdaptiveMode = "off";

@@ -14,7 +14,7 @@
 
 import QRCode from "qrcode";
 import { fitQrDisplaySize } from "../shared/display";
-import { rasterizeGrid, rasterizeQr, type QrRaster } from "../shared/qr-raster";
+import { rasterizeGrid, rasterizeQr, rasterizeRgbQr, type QrRaster } from "../shared/qr-raster";
 import { formatBytes } from "../shared/format";
 import {
   MAX_SOURCE_BLOCKS,
@@ -538,27 +538,64 @@ async function startStream(revealStage = false) {
   const makeFrame = (): ImageData => {
     const rasters: QrRaster[] = [];
     for (let c = 0; c < totalCodesPerFrame; c++) {
-      const bytes = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
-      nextSeq++;
-      const qr = QRCode.create([{ data: bytes, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
-        errorCorrectionLevel: ecc,
-        version,
-        maskPattern: 4,
-      });
-      if (version === undefined) {
-        version = qr.version;
-      }
-      
-      let extraBits: Uint8Array | undefined;
-      if (colorMode === "color2bit") {
-        // Generate pseudo extra parity/payload bitstream for color modules
-        extraBits = new Uint8Array(qr.modules.size * qr.modules.size);
-        for (let i = 0; i < extraBits.length; i++) {
-          extraBits[i] = (i + nextSeq) % 2;
-        }
-      }
+      if (colorMode === "rgb") {
+        const bytesR = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
+        nextSeq++;
+        const bytesG = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
+        nextSeq++;
+        const bytesB = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
+        nextSeq++;
 
-      rasters.push(rasterizeQr(qr.modules.size, qr.modules.data, MARGIN, extraBits));
+        const qrR = QRCode.create([{ data: bytesR, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
+          errorCorrectionLevel: ecc,
+          version,
+          maskPattern: 4,
+        });
+        const qrG = QRCode.create([{ data: bytesG, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
+          errorCorrectionLevel: ecc,
+          version: qrR.version,
+          maskPattern: 4,
+        });
+        const qrB = QRCode.create([{ data: bytesB, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
+          errorCorrectionLevel: ecc,
+          version: qrR.version,
+          maskPattern: 4,
+        });
+
+        if (version === undefined) version = qrR.version;
+
+        rasters.push(
+          rasterizeRgbQr(
+            qrR.modules.size,
+            qrR.modules.data,
+            qrG.modules.data,
+            qrB.modules.data,
+            MARGIN,
+          ),
+        );
+      } else {
+        const bytes = packFrame({ ...header, seq: nextSeq }, encoder.encode(nextSeq));
+        nextSeq++;
+        const qr = QRCode.create([{ data: bytes, mode: "byte" } as unknown as QRCode.QRCodeSegment], {
+          errorCorrectionLevel: ecc,
+          version,
+          maskPattern: 4,
+        });
+        if (version === undefined) {
+          version = qr.version;
+        }
+
+        let extraBits: Uint8Array | undefined;
+        if (colorMode === "color2bit") {
+          // Generate pseudo extra parity/payload bitstream for color modules
+          extraBits = new Uint8Array(qr.modules.size * qr.modules.size);
+          for (let i = 0; i < extraBits.length; i++) {
+            extraBits[i] = (i + nextSeq) % 2;
+          }
+        }
+
+        rasters.push(rasterizeQr(qr.modules.size, qr.modules.data, MARGIN, extraBits));
+      }
     }
 
     const gridRaster = totalCodesPerFrame > 1

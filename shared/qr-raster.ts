@@ -64,6 +64,30 @@ export function rasterizeQr(
   return { width: size, height: size, size, pixels };
 }
 
+export function rasterizeRgbQr(
+  moduleCount: number,
+  modulesR: ArrayLike<number>,
+  modulesG: ArrayLike<number>,
+  modulesB: ArrayLike<number>,
+  margin: number,
+): QrRaster {
+  const size = moduleCount + 2 * margin;
+  const pixels = new Uint32Array(size * size);
+  pixels.fill(WHITE);
+  for (let y = 0; y < moduleCount; y++) {
+    const row = (y + margin) * size + margin;
+    const src = y * moduleCount;
+    for (let x = 0; x < moduleCount; x++) {
+      const darkR = modulesR[src + x] ? 0 : 0xff;
+      const darkG = modulesG[src + x] ? 0 : 0xff;
+      const darkB = modulesB[src + x] ? 0 : 0xff;
+      // In little-endian u32: 0xAABBGGRR
+      pixels[row + x] = 0xff000000 | (darkB << 16) | (darkG << 8) | darkR;
+    }
+  }
+  return { width: size, height: size, size, pixels };
+}
+
 export function rasterizeGrid(
   rasters: QrRaster[],
   cols: number,

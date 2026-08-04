@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { rasterizeQr } from "../shared/qr-raster.ts";
+import { rasterizeQr, rasterizeRgbQr } from "../shared/qr-raster.ts";
 
 const WHITE = 0xffffffff;
 const BLACK = 0xff000000;
@@ -44,3 +44,11 @@ test("pixel values are the RGBA bytes an ImageData buffer expects", () => {
   // and the white corner is R,G,B,A all 255
   assert.deepEqual([...bytes.slice(0, 4)], [255, 255, 255, 255]);
 });
+
+test("rasterizeRgbQr multiplexes R, G, B channel dark/light modules", () => {
+  // Red dark (1), Green light (0), Blue light (0) → Red channel = 0, Green = 255, Blue = 255 → Cyan color pixel (0xFFFF0000 in u32)
+  const { pixels } = rasterizeRgbQr(1, [1], [0], [0], 0);
+  const bytes = new Uint8Array(pixels.buffer);
+  assert.deepEqual([...bytes.slice(0, 4)], [0, 255, 255, 255]);
+});
+
