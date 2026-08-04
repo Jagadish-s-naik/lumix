@@ -11,11 +11,6 @@ go. Works offline after the first visit and can be installed as a PWA.
 
 Lumix uses Luby transform (LT) fountain coding to pack arbitrary files up to 64 MB (or text snippets), preserving filename and media type metadata inside the optical container. It adaptively uses gzip when it shrinks the optical payload, renders high-density frames with multi-code grid layouts and an error-corrected color channel, and verifies SHA-256 integrity before offering the received file for download.
 
-<p align="center">
-  <img src="docs/receiving.jpg" width="420"
-       alt="Phone receiving a 2 MB image over light: decoding the sender's animated QR code" />
-</p>
-<p align="center"><em>Mid-transfer: a phone pulling data out of the air.</em></p>
 
 ## Features
 
