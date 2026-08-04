@@ -68,7 +68,7 @@ export function rasterizeGrid(
   rasters: QrRaster[],
   cols: number,
   rows: number,
-  gap = 4,
+  gap = 8,
 ): QrRaster {
   if (rasters.length === 0) {
     return { width: 0, height: 0, size: 0, pixels: new Uint32Array(0) };
