@@ -115,6 +115,8 @@ async function start() {
     facingMode: "environment",
     width: { ideal: captureWidth },
     height: { ideal: Math.round((captureWidth * 3) / 4) },
+    // Request continuous autofocus if supported by mobile browser
+    ...({ focusMode: { ideal: "continuous" } } as any),
   };
   try {
     try {
@@ -239,14 +241,29 @@ function captureFrame() {
   if (!vw || !vh) return;
   captureTimes.push(performance.now());
   if (pool.busyCount === pool.size) return; // all busy — drop it, no harm done
-  if (grab.width !== vw || grab.height !== vh) {
-    grab.width = vw;
-    grab.height = vh;
+
+  // Target max 640px dimension for fast WASM barcode scanning
+  const maxDim = 640;
+  let targetW = vw;
+  let targetH = vh;
+  if (vw > maxDim || vh > maxDim) {
+    if (vw >= vh) {
+      targetW = maxDim;
+      targetH = Math.round((vh * maxDim) / vw);
+    } else {
+      targetH = maxDim;
+      targetW = Math.round((vw * maxDim) / vh);
+    }
+  }
+
+  if (grab.width !== targetW || grab.height !== targetH) {
+    grab.width = targetW;
+    grab.height = targetH;
   }
   const ctx = grab.getContext("2d", { willReadFrequently: true })!;
-  ctx.drawImage(video, 0, 0);
-  const img = ctx.getImageData(0, 0, vw, vh);
-  pool.submit({ id: frameId++, buf: img.data.buffer, w: vw, h: vh }, [img.data.buffer]);
+  ctx.drawImage(video, 0, 0, targetW, targetH);
+  const img = ctx.getImageData(0, 0, targetW, targetH);
+  pool.submit({ id: frameId++, buf: img.data.buffer, w: targetW, h: targetH }, [img.data.buffer]);
 }
 
 import { decryptPayload, isEncryptedContainer } from "../shared/crypto";
