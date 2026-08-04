@@ -125,7 +125,8 @@ textarea:focus-visible,
 .stage {
   background: #fff;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 16px;
+  box-shadow: 0 0 32px rgba(34, 211, 238, 0.25), 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 .stage canvas {
   display: block;
@@ -134,10 +135,14 @@ textarea:focus-visible,
 .preview {
   position: relative;
   width: min(92vw, 480px);
+  border-radius: 16px;
+  padding: 3px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.5), rgba(129, 140, 248, 0.2));
+  box-shadow: 0 0 32px rgba(34, 211, 238, 0.2), 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 .preview video {
   width: 100%;
-  border-radius: 10px;
+  border-radius: 13px;
   background: #000;
   display: block;
 }
@@ -295,14 +300,17 @@ details.settings input[type="range"] {
    functional (the QR quiet zone, the letterbox behind the camera). */
 :root {
   color-scheme: dark;
-  --bg: #0F0F1A;
+  --bg: #0B0B14;
   --brand: #1E1B4B;
-  --panel: #161628;
-  --panel-strong: #1E1E36;
-  --line: #262645;
-  --line-bright: #393963;
-  --text: #F1F5F9;
-  --text-dim: #CBD5E1;
+  --panel: rgba(22, 22, 42, 0.65);
+  --panel-strong: rgba(30, 30, 56, 0.75);
+  --glass-bg: rgba(22, 22, 44, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-glow: rgba(34, 211, 238, 0.35);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-bright: rgba(255, 255, 255, 0.18);
+  --text: #F8FAFC;
+  --text-dim: #E2E8F0;
   --muted: #94A3B8;
   --muted-dim: #78889E;
   --accent: #22D3EE;
@@ -315,7 +323,7 @@ details.settings input[type="range"] {
   /* Behind the camera image: stays near-black in any theme. */
   --viewport-bg: #08080F;
   --accent-rgb: 34, 211, 238;
-  --bg-rgb: 15, 15, 26;
+  --bg-rgb: 11, 11, 20;
 }
 
 @media (prefers-color-scheme: light) {
@@ -323,10 +331,13 @@ details.settings input[type="range"] {
     color-scheme: light;
     --bg: #F8FAFC;
     --brand: #1E1B4B;
-    --panel: #FFFFFF;
-    --panel-strong: #F1F5F9;
-    --line: #E2E8F0;
-    --line-bright: #CBD5E1;
+    --panel: rgba(255, 255, 255, 0.75);
+    --panel-strong: rgba(241, 245, 249, 0.85);
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-border-glow: rgba(8, 145, 178, 0.35);
+    --line: rgba(0, 0, 0, 0.08);
+    --line-bright: rgba(0, 0, 0, 0.16);
     --text: #1E293B;
     --text-dim: #334155;
     --muted: #64748B;
@@ -356,8 +367,11 @@ details.settings input[type="range"] {
   padding: 0;
   min-height: 100svh;
   background:
-    radial-gradient(circle at 80% -10%, rgba(var(--accent-rgb), 0.07), transparent 35%),
+    radial-gradient(circle at 15% 15%, rgba(129, 140, 248, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 25%, rgba(34, 211, 238, 0.15), transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(129, 140, 248, 0.12), transparent 50%),
     var(--bg);
+  background-attachment: fixed;
 }
 
 .home-shell,
@@ -477,24 +491,38 @@ details.settings input[type="range"] {
 }
 
 .transfer-card {
-  /* Tall enough that both cards' buttons line up, no taller — the numbered
-     row this used to leave space for is gone. */
-  min-height: 336px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 30px;
-  padding: clamp(24px, 4vw, 42px);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: linear-gradient(150deg, var(--panel-strong), var(--panel));
+  gap: 32px;
+  min-height: 280px;
+  padding: clamp(24px, 4vw, 36px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+.transfer-card:hover {
+  border-color: var(--glass-border-glow);
+  box-shadow: 0 12px 40px 0 rgba(34, 211, 238, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.file-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.12), transparent 50%),
+    var(--glass-bg);
 }
 
 .note-feature-card {
   background:
-    linear-gradient(150deg, rgba(var(--accent-rgb), 0.07), transparent 55%),
-    var(--panel);
-  border-color: var(--line-bright);
+    radial-gradient(circle at 100% 0%, rgba(129, 140, 248, 0.14), transparent 50%),
+    var(--glass-bg);
+  border-color: var(--glass-border);
 }
 
 .transfer-card h2 {
@@ -1079,18 +1107,23 @@ details.settings input[type="range"] {
 
 .file-dropzone {
   width: min(92vw, 640px);
-  background: var(--panel);
-  border: 2px dashed var(--line-bright);
-  border-radius: 12px;
-  padding: 24px 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px dashed rgba(34, 211, 238, 0.4);
+  border-radius: 16px;
+  padding: 28px 24px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
 }
 .file-dropzone:hover,
 .file-dropzone.drop-active {
   border-color: var(--accent);
-  background: var(--panel-strong);
+  background: rgba(30, 30, 60, 0.7);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 .dropzone-inner {
   display: flex;
