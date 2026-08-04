@@ -242,8 +242,8 @@ function captureFrame() {
   captureTimes.push(performance.now());
   if (pool.busyCount === pool.size) return; // all busy — drop it, no harm done
 
-  // Target max 640px dimension for fast WASM barcode scanning
-  const maxDim = 640;
+  // Target max 960px dimension for sharp mobile barcode scanning
+  const maxDim = 960;
   let targetW = vw;
   let targetH = vh;
   if (vw > maxDim || vh > maxDim) {
