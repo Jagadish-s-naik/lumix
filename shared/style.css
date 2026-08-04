@@ -134,7 +134,7 @@ textarea:focus-visible,
 }
 .preview {
   position: relative;
-  width: min(92vw, 480px);
+  width: min(96vw, 640px);
   border-radius: 16px;
   padding: 3px;
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.5), rgba(129, 140, 248, 0.2));
@@ -1373,41 +1373,6 @@ details.settings input[type="range"] {
   .action-arrow {
     width: 18px;
     height: 18px;
-  }
-  .send-shell {
-    width: calc(100% - 24px);
-    padding-top: 28px;
-  }
-  .receiver-shell {
-    width: calc(100% - 20px);
-    padding-top: 10px;
-  }
-  .receiver-primary {
-    gap: 8px;
-  }
-  .receiver-heading {
-    gap: 10px;
-  }
-  .receiver-heading h1 {
-    font-size: 25px;
-  }
-  .receiver-heading .status-line {
-    font-size: 10px;
-  }
-  .preview {
-    max-height: calc(100dvh - 128px);
-  }
-  .progress-status {
-    font-size: 11px;
-  }
-  .transfer-hud {
-    padding: 42px 10px 10px;
-  }
-}
-
-@media (max-height: 620px) and (orientation: landscape) {
-  .receiver-heading .eyebrow {
-    display: none;
   }
   .receiver-heading h1 {
     font-size: 20px;
