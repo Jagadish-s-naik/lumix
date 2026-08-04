@@ -401,6 +401,26 @@ async function main() {
   for (const el of [cfgFps, cfgBytes, cfgGrid, cfgColor, cfgAdaptive, cfgEcc, cfgSize]) {
     if (el) el.addEventListener("change", () => void startStream());
   }
+
+  // Quick Presets event listeners
+  const btnFast = document.getElementById("preset-fast");
+  const btnBalanced = document.getElementById("preset-balanced");
+  const btnStable = document.getElementById("preset-stable");
+  const presetBtns = [btnFast, btnBalanced, btnStable];
+
+  const applyPreset = (fps: string, bytes: string, grid: string, activeBtn: HTMLElement | null) => {
+    if (cfgFps) cfgFps.value = fps;
+    if (cfgBytes) cfgBytes.value = bytes;
+    if (cfgGrid) cfgGrid.value = grid;
+    for (const b of presetBtns) b?.classList.remove("active");
+    activeBtn?.classList.add("active");
+    void startStream();
+  };
+
+  btnFast?.addEventListener("click", () => applyPreset("120", "1850", "3x3", btnFast));
+  btnBalanced?.addEventListener("click", () => applyPreset("60", "1465", "1x1", btnBalanced));
+  btnStable?.addEventListener("click", () => applyPreset("24", "850", "1x1", btnStable));
+
   await requestScreenWakeLock();
 }
 

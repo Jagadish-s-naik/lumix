@@ -1429,3 +1429,112 @@ details.settings input[type="range"] {
     scroll-behavior: auto !important;
   }
 }
+
+/* Reticle Scanning Viewfinder Overlay */
+.scan-reticle {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.reticle-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--accent);
+}
+
+.reticle-corner.top-left {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: 8px;
+}
+
+.reticle-corner.top-right {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: 8px;
+}
+
+.reticle-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: 8px;
+}
+
+.reticle-corner.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: 8px;
+}
+
+.reticle-laser {
+  position: absolute;
+  top: 0;
+  left: 5%;
+  width: 90%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: laserScan 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes laserScan {
+  0% { top: 5%; opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { top: 95%; opacity: 0.3; }
+}
+
+/* Quick Settings Presets Bar */
+.preset-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--line-bright);
+}
+
+.preset-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.preset-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.preset-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.preset-btn.active {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}

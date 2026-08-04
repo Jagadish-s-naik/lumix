@@ -40,6 +40,13 @@
         <button id="start">Start camera</button>
         <div class="preview" id="preview" style="display: none" role="region" aria-label="Camera scanning viewport">
           <video id="video" muted playsinline aria-label="Live camera scanning feed"></video>
+          <div class="scan-reticle" aria-hidden="true">
+            <span class="reticle-corner top-left"></span>
+            <span class="reticle-corner top-right"></span>
+            <span class="reticle-corner bottom-left"></span>
+            <span class="reticle-corner bottom-right"></span>
+            <div class="reticle-laser"></div>
+          </div>
           <div class="transfer-hud">
             <div class="progress-stage-stepper" id="stage-stepper" style="display: none" aria-label="Two-stage recovery progress">
               <span class="stepper-step active" id="step-collect">1. Collecting blocks</span>
