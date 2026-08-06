@@ -25,116 +25,123 @@
       </div>
     </header>
     <main class="receiver-shell">
-      <section class="receiver-primary">
-        <div class="receiver-heading">
-          <div>
-            <p class="eyebrow">Camera → device</p>
-            <h1>Receive</h1>
-          </div>
-          <div class="heading-actions">
-            <button id="pwa-install-btn" type="button" class="history-toggle-btn" style="display: none; border-color: var(--accent); color: var(--accent);" aria-label="Install Lumix app">Install App</button>
-            <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
-          </div>
-          <div class="hint status-line" id="stats" aria-live="polite">Ready to scan a file or text stream</div>
-        </div>
-        <button id="start">Start camera</button>
-        <div class="preview" id="preview" style="display: none" role="region" aria-label="Camera scanning viewport">
-          <video id="video" muted playsinline aria-label="Live camera scanning feed"></video>
-          <div class="scan-reticle" aria-hidden="true">
-            <span class="reticle-corner top-left"></span>
-            <span class="reticle-corner top-right"></span>
-            <span class="reticle-corner bottom-left"></span>
-            <span class="reticle-corner bottom-right"></span>
-            <div class="reticle-laser"></div>
-          </div>
-          <div class="transfer-hud">
-            <div class="progress-stage-stepper" id="stage-stepper" style="display: none" aria-label="Two-stage recovery progress">
-              <span class="stepper-step active" id="step-collect">1. Collecting blocks</span>
-              <span class="stepper-arrow" aria-hidden="true">→</span>
-              <span class="stepper-step" id="step-reconstruct">2. Reconstructing file</span>
+      <div class="receiver-grid">
+        <div class="receiver-main-col">
+          <section class="receiver-primary">
+            <div class="receiver-heading">
+              <div>
+                <p class="eyebrow">Camera → device</p>
+                <h1>Receive</h1>
+              </div>
+              <div class="heading-actions">
+                <button id="pwa-install-btn" type="button" class="history-toggle-btn" style="display: none; border-color: var(--accent); color: var(--accent);" aria-label="Install Lumix app">Install App</button>
+                <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
+              </div>
+              <div class="hint status-line" id="stats" aria-live="polite">Ready to scan a file or text stream</div>
             </div>
-            <div class="progress-status" id="progress-status" style="display: none" aria-live="polite">
-              <strong id="progress-label">0% · 0/0 blocks</strong>
-              <span id="eta-label">Estimating time…</span>
+            <button id="start">Start camera</button>
+            <div class="preview" id="preview" style="display: none" role="region" aria-label="Camera scanning viewport">
+              <video id="video" muted playsinline aria-label="Live camera scanning feed"></video>
+              <div class="scan-reticle" aria-hidden="true">
+                <span class="reticle-corner top-left"></span>
+                <span class="reticle-corner top-right"></span>
+                <span class="reticle-corner bottom-left"></span>
+                <span class="reticle-corner bottom-right"></span>
+                <div class="reticle-laser"></div>
+              </div>
+              <div class="transfer-hud">
+                <div class="progress-stage-stepper" id="stage-stepper" style="display: none" aria-label="Two-stage recovery progress">
+                  <span class="stepper-step active" id="step-collect">1. Collecting blocks</span>
+                  <span class="stepper-arrow" aria-hidden="true">→</span>
+                  <span class="stepper-step" id="step-reconstruct">2. Reconstructing file</span>
+                </div>
+                <div class="progress-status" id="progress-status" style="display: none" aria-live="polite">
+                  <strong id="progress-label">0% · 0/0 blocks</strong>
+                  <span id="eta-label">Estimating time…</span>
+                </div>
+                <div
+                  class="progress"
+                  id="progress"
+                  style="display: none"
+                  role="progressbar"
+                  aria-label="Transfer recovery progress"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                ><div id="bar"></div></div>
+              </div>
             </div>
-            <div
-              class="progress"
-              id="progress"
-              style="display: none"
-              role="progressbar"
-              aria-label="Transfer recovery progress"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="0"
-            ><div id="bar"></div></div>
-          </div>
+            <div id="resume-banner" class="resume-banner" style="display: none;" aria-live="polite">
+              <span>Resuming transfer — <strong id="resume-percent">0%</strong> already collected</span>
+            </div>
+            <div id="result" aria-live="polite"></div>
+          </section>
         </div>
-        <div id="resume-banner" class="resume-banner" style="display: none;" aria-live="polite">
-          <span>Resuming transfer — <strong id="resume-percent">0%</strong> already collected</span>
+
+        <aside class="receiver-side-col">
+          <details class="settings diagnostics" id="diagnostics" style="display: none">
+            <summary>Live diagnostics</summary>
+            <div class="metrics" id="metrics" style="display: none">
+              <div class="metric"><div class="k">capture fps</div><div class="v" id="m-cap">—</div></div>
+              <div class="metric"><div class="k">decode fps</div><div class="v amber" id="m-dec">—</div></div>
+              <div class="metric"><div class="k">goodput</div><div class="v amber" id="m-rate">—</div></div>
+              <div class="metric"><div class="k">success rate</div><div class="v amber" id="m-success">—</div></div>
+              <div class="metric"><div class="k">elapsed</div><div class="v" id="m-time">—</div></div>
+              <div class="metric"><div class="k">frames new/dup</div><div class="v" id="m-frames">—</div></div>
+              <div class="metric"><div class="k">blocks K</div><div class="v" id="m-k">—</div></div>
+              <div class="metric"><div class="k">block len</div><div class="v" id="m-block">—</div></div>
+              <div class="metric"><div class="k">transfer</div><div class="v" id="m-payload">—</div></div>
+            </div>
+          </details>
+          <details class="settings" id="settings" open>
+            <summary>Receive settings</summary>
+            <div class="row">
+              <label>capture width
+                <select id="cfg-width"><option>960</option><option selected>1280</option><option>1920</option></select>
+              </label>
+              <label>capture fps
+                <select id="cfg-capfps"><option>30</option><option selected>60</option></select>
+              </label>
+              <label>decode workers
+                <select id="cfg-workers">
+                  <option>1</option><option>2</option><option>3</option><option selected>4</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
+                  <option>10</option><option>12</option><option>16</option>
+                </select>
+              </label>
+            </div>
+            <p class="hint settings-actual" id="camera-actual">Applied when the camera starts.</p>
+          </details>
+        </aside>
+      </div>
+
+      <!-- Decryption PIN Input Dialog -->
+      <dialog id="pin-dialog" class="history-dialog" aria-labelledby="pin-dialog-title">
+        <div class="history-dialog-header">
+          <h2 id="pin-dialog-title">Encrypted Payload</h2>
+          <button id="cancel-pin-btn" type="button" class="text-button" aria-label="Cancel decryption">Cancel</button>
         </div>
-        <div id="result" aria-live="polite"></div>
+        <p class="hint">Enter the 4-digit PIN displayed on the sender screen to decrypt.</p>
+        <div style="display: flex; gap: 10px; margin: 16px 0;">
+          <input id="rec-pin-input" type="text" maxlength="6" pattern="[0-9]*" placeholder="Enter PIN" aria-label="Enter 4-digit decryption PIN" style="font-size: 18px; padding: 8px 12px; width: 140px; background: var(--bg); color: var(--text); border: 1px solid var(--line-bright); border-radius: 6px;" />
+          <button id="submit-pin-btn" type="button" class="history-toggle-btn" style="padding: 8px 16px; font-size: 15px;">Decrypt</button>
+        </div>
+        <div id="pin-error" class="failed" style="font-size: 13px; margin-top: 4px;" hidden aria-live="assertive">Invalid PIN. Please try again.</div>
+      </dialog>
 
-        <!-- Decryption PIN Input Dialog -->
-        <dialog id="pin-dialog" class="history-dialog" aria-labelledby="pin-dialog-title">
-          <div class="history-dialog-header">
-            <h2 id="pin-dialog-title">Encrypted Payload</h2>
-            <button id="cancel-pin-btn" type="button" class="text-button" aria-label="Cancel decryption">Cancel</button>
-          </div>
-          <p class="hint">Enter the 4-digit PIN displayed on the sender screen to decrypt.</p>
-          <div style="display: flex; gap: 10px; margin: 16px 0;">
-            <input id="rec-pin-input" type="text" maxlength="6" pattern="[0-9]*" placeholder="Enter PIN" aria-label="Enter 4-digit decryption PIN" style="font-size: 18px; padding: 8px 12px; width: 140px; background: var(--bg); color: var(--text); border: 1px solid var(--line-bright); border-radius: 6px;" />
-            <button id="submit-pin-btn" type="button" class="history-toggle-btn" style="padding: 8px 16px; font-size: 15px;">Decrypt</button>
-          </div>
-          <div id="pin-error" class="failed" style="font-size: 13px; margin-top: 4px;" hidden aria-live="assertive">Invalid PIN. Please try again.</div>
-        </dialog>
-
-        <!-- Transfer History Drawer Modal -->
-        <dialog id="history-dialog" class="history-dialog" aria-labelledby="rec-history-title">
-          <div class="history-dialog-header">
-            <h2 id="rec-history-title">Transfer History</h2>
-            <button id="close-history" type="button" class="text-button" aria-label="Close transfer history">Close</button>
-          </div>
-          <div id="history-list-container" class="history-list-container" role="region" aria-label="Saved transfer entries">
-            <p class="empty-history">No transfer history recorded yet.</p>
-          </div>
-          <div class="history-dialog-footer">
-            <button id="clear-history" type="button" class="secondary-button">Clear history</button>
-          </div>
-        </dialog>
-        <details class="settings diagnostics" id="diagnostics" style="display: none">
-          <summary>Live diagnostics</summary>
-          <div class="metrics" id="metrics" style="display: none">
-            <div class="metric"><div class="k">capture fps</div><div class="v" id="m-cap">—</div></div>
-            <div class="metric"><div class="k">decode fps</div><div class="v amber" id="m-dec">—</div></div>
-            <div class="metric"><div class="k">goodput</div><div class="v amber" id="m-rate">—</div></div>
-            <div class="metric"><div class="k">success rate</div><div class="v amber" id="m-success">—</div></div>
-            <div class="metric"><div class="k">elapsed</div><div class="v" id="m-time">—</div></div>
-            <div class="metric"><div class="k">frames new/dup</div><div class="v" id="m-frames">—</div></div>
-            <div class="metric"><div class="k">blocks K</div><div class="v" id="m-k">—</div></div>
-            <div class="metric"><div class="k">block len</div><div class="v" id="m-block">—</div></div>
-            <div class="metric"><div class="k">transfer</div><div class="v" id="m-payload">—</div></div>
-          </div>
-        </details>
-        <details class="settings" id="settings">
-          <summary>Receive settings</summary>
-          <div class="row">
-            <label>capture width
-              <select id="cfg-width"><option>960</option><option selected>1280</option><option>1920</option></select>
-            </label>
-            <label>capture fps
-              <select id="cfg-capfps"><option>30</option><option selected>60</option></select>
-            </label>
-            <label>decode workers
-              <select id="cfg-workers">
-                <option>1</option><option>2</option><option>3</option><option selected>4</option>
-                <option>5</option><option>6</option><option>7</option><option>8</option>
-                <option>10</option><option>12</option><option>16</option>
-              </select>
-            </label>
-          </div>
-          <p class="hint settings-actual" id="camera-actual">Applied when the camera starts.</p>
-        </details>
-      </section>
+      <!-- Transfer History Drawer Modal -->
+      <dialog id="history-dialog" class="history-dialog" aria-labelledby="rec-history-title">
+        <div class="history-dialog-header">
+          <h2 id="rec-history-title">Transfer History</h2>
+          <button id="close-history" type="button" class="text-button" aria-label="Close transfer history">Close</button>
+        </div>
+        <div id="history-list-container" class="history-list-container" role="region" aria-label="Saved transfer entries">
+          <p class="empty-history">No transfer history recorded yet.</p>
+        </div>
+        <div class="history-dialog-footer">
+          <button id="clear-history" type="button" class="secondary-button">Clear history</button>
+        </div>
+      </dialog>
     </main>
     <footer class="site-footer">
       <span class="footer-id">

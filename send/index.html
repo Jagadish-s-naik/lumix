@@ -24,59 +24,129 @@
       </div>
     </header>
     <main class="send-shell">
-      <section class="tool-intro">
-        <p class="eyebrow">Screen → camera</p>
-        <h1 id="tool-title">Send a file</h1>
-        <p>Nothing leaves your device until you scan with a receiver.</p>
-      </section>
+      <div class="send-grid">
+        <div class="send-main-col">
+          <section class="tool-intro">
+            <p class="eyebrow">Screen → camera</p>
+            <h1 id="tool-title">Send a file</h1>
+            <p>Nothing leaves your device until you scan with a receiver.</p>
+          </section>
 
-      <div class="mode-picker" id="mode-picker" role="radiogroup" aria-label="What to send">
-        <label>
-          <input type="radio" name="send-mode" value="file" checked />
-          <span>File</span>
-        </label>
-        <label>
-          <input type="radio" name="send-mode" value="snippet" />
-          <span>Text snippet</span>
-        </label>
-        <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
-      </div>
-
-      <div class="hint status-line" id="specs" aria-live="polite">Choose a file to begin</div>
-
-      <div class="file-dropzone" id="pane-file" tabindex="0" role="button" aria-label="File selection dropzone. Drag and drop file here or press Enter to browse">
-        <div class="dropzone-inner" id="dropzone-content">
-          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span class="dropzone-title">Drag & drop your file here</span>
-          <span class="dropzone-subtitle">or tap to browse · up to %MAX_FILE_LABEL%</span>
-          <input id="cfg-file" type="file" class="file-input-hidden" aria-label="Choose file to transmit" />
-        </div>
-        <div class="file-info-card" id="file-info-card" hidden>
-          <div class="file-info-details">
-            <strong id="file-info-name">filename.ext</strong>
-            <span id="file-info-meta">0 KB · binary</span>
+          <div class="mode-picker" id="mode-picker" role="radiogroup" aria-label="What to send">
+            <label>
+              <input type="radio" name="send-mode" value="file" checked />
+              <span>File</span>
+            </label>
+            <label>
+              <input type="radio" name="send-mode" value="snippet" />
+              <span>Text snippet</span>
+            </label>
+            <button id="open-history" type="button" class="history-toggle-btn" title="View Transfer History">History</button>
           </div>
-          <button id="file-info-clear" type="button" class="file-clear-btn" title="Change file" aria-label="Remove selected file">✕</button>
+
+          <div class="hint status-line" id="specs" aria-live="polite">Choose a file to begin</div>
+
+          <div class="file-dropzone" id="pane-file" tabindex="0" role="button" aria-label="File selection dropzone. Drag and drop file here or press Enter to browse">
+            <div class="dropzone-inner" id="dropzone-content">
+              <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="dropzone-title">Drag & drop your file here</span>
+              <span class="dropzone-subtitle">or tap to browse · up to %MAX_FILE_LABEL%</span>
+              <input id="cfg-file" type="file" class="file-input-hidden" aria-label="Choose file to transmit" />
+            </div>
+            <div class="file-info-card" id="file-info-card" hidden>
+              <div class="file-info-details">
+                <strong id="file-info-name">filename.ext</strong>
+                <span id="file-info-meta">0 KB · binary</span>
+              </div>
+              <button id="file-info-clear" type="button" class="file-clear-btn" title="Change file" aria-label="Remove selected file">✕</button>
+            </div>
+          </div>
+
+          <div class="demo-picker" id="pane-demo" hidden>
+            <span>Demo payload</span>
+            <div class="demo-buttons">
+              <button type="button" data-demo="success.png">512 KB image</button>
+              <button type="button" data-demo="success-2mb.png">2 MB image</button>
+            </div>
+          </div>
+
+          <div class="note-composer" id="pane-snippet" hidden>
+            <label for="snippet-text" id="snippet-label">Text to send</label>
+            <textarea id="snippet-text" rows="7" placeholder="Paste or type anything — a URL, a config, a wall of text…"></textarea>
+            <button id="send-snippet" type="button">Start text stream</button>
+          </div>
+
+          <div class="stage" id="stage" hidden role="region" aria-label="Animated QR code transmission stream">
+            <canvas id="qr" width="16" height="16" aria-label="Animated QR code canvas"></canvas>
+            <div class="stage-seq-counter" id="stage-seq" aria-live="polite">Seq: 0</div>
+          </div>
         </div>
-      </div>
 
-      <div class="demo-picker" id="pane-demo" hidden>
-        <span>Demo payload</span>
-        <div class="demo-buttons">
-          <button type="button" data-demo="success.png">512 KB image</button>
-          <button type="button" data-demo="success-2mb.png">2 MB image</button>
-        </div>
-      </div>
+        <aside class="send-side-col">
+          <details class="settings" open>
+            <summary>Transfer settings</summary>
+            <div class="preset-bar">
+              <span class="preset-label">Quick Presets:</span>
+              <button type="button" class="preset-btn" id="preset-fast" title="120 FPS, 3x3 Grid, 1850 B/frame (Flagship phones)">🚀 High Speed</button>
+              <button type="button" class="preset-btn active" id="preset-balanced" title="60 FPS, 1x1 Grid, 1465 B/frame (Default)">⚖️ Balanced</button>
+              <button type="button" class="preset-btn" id="preset-stable" title="24 FPS, 1x1 Grid, 850 B/frame (Max stability)">🛡️ Max Stability</button>
+            </div>
+            <div class="row">
+              <label>
+                tx fps
+                <!-- Options come from shared/send-settings.ts via htmlTokens() -->
+                <select id="cfg-fps">%TX_FPS_OPTIONS%</select>
+              </label>
+              <label>
+                bytes / frame
+                <select id="cfg-bytes">%FRAME_BYTES_OPTIONS%</select>
+              </label>
+              <label>
+                grid mode
+                <select id="cfg-grid">%GRID_MODE_OPTIONS%</select>
+              </label>
+              <label>
+                color mode
+                <select id="cfg-color">%COLOR_MODE_OPTIONS%</select>
+              </label>
+              <label>
+                adaptive density
+                <select id="cfg-adaptive">
+                  <option value="off" selected>Off</option>
+                  <option value="adaptive">Auto-Backoff</option>
+                </select>
+              </label>
+              <label>
+                error correction
+                <select id="cfg-ecc">
+                  <option selected>L</option><option>M</option><option>Q</option><option>H</option>
+                </select>
+              </label>
+              <label>
+                encryption
+                <select id="cfg-encrypt">
+                  <option value="off" selected>Off</option>
+                  <option value="pin">4-Digit PIN</option>
+                </select>
+              </label>
+              <label id="cfg-pin-container" hidden>
+                PIN Secret
+                <div class="pin-input-group">
+                  <input id="cfg-pin" type="text" maxlength="6" pattern="[0-9]*" value="1234" style="width: 80px;" />
+                  <button id="gen-pin-btn" type="button" class="history-toggle-btn">Gen</button>
+                </div>
+              </label>
+              <label>
+                display size
+                <input id="cfg-size" type="range" min="300" max="1200" step="50" value="900" />
+              </label>
+            </div>
+          </details>
 
-      <div class="note-composer" id="pane-snippet" hidden>
-        <label for="snippet-text" id="snippet-label">Text to send</label>
-        <textarea id="snippet-text" rows="7" placeholder="Paste or type anything — a URL, a config, a wall of text…"></textarea>
-        <button id="send-snippet" type="button">Start text stream</button>
-      </div>
-
-      <div class="stage" id="stage" hidden role="region" aria-label="Animated QR code transmission stream">
-        <canvas id="qr" width="16" height="16" aria-label="Animated QR code canvas"></canvas>
-        <div class="stage-seq-counter" id="stage-seq" aria-live="polite">Seq: 0</div>
+          <div class="hint footer-hint">
+            Open <a href="../receive/">Receive</a> on the other device. Turn up this screen's brightness.
+          </div>
+        </aside>
       </div>
 
       <!-- Transfer History Drawer Modal -->
@@ -92,68 +162,6 @@
           <button id="clear-history" type="button" class="secondary-button">Clear history</button>
         </div>
       </dialog>
-      <details class="settings">
-        <summary>Transfer settings</summary>
-        <div class="preset-bar">
-          <span class="preset-label">Quick Presets:</span>
-          <button type="button" class="preset-btn" id="preset-fast" title="120 FPS, 3x3 Grid, 1850 B/frame (Flagship phones)">🚀 High Speed</button>
-          <button type="button" class="preset-btn active" id="preset-balanced" title="60 FPS, 1x1 Grid, 1465 B/frame (Default)">⚖️ Balanced</button>
-          <button type="button" class="preset-btn" id="preset-stable" title="24 FPS, 1x1 Grid, 850 B/frame (Max stability)">🛡️ Max Stability</button>
-        </div>
-        <div class="row">
-          <label>
-            tx fps
-            <!-- Options come from shared/send-settings.ts via htmlTokens() -->
-            <select id="cfg-fps">%TX_FPS_OPTIONS%</select>
-          </label>
-          <label>
-            bytes / frame
-            <select id="cfg-bytes">%FRAME_BYTES_OPTIONS%</select>
-          </label>
-          <label>
-            grid mode
-            <select id="cfg-grid">%GRID_MODE_OPTIONS%</select>
-          </label>
-          <label>
-            color mode
-            <select id="cfg-color">%COLOR_MODE_OPTIONS%</select>
-          </label>
-          <label>
-            adaptive density
-            <select id="cfg-adaptive">
-              <option value="off" selected>Off</option>
-              <option value="adaptive">Auto-Backoff</option>
-            </select>
-          </label>
-          <label>
-            error correction
-            <select id="cfg-ecc">
-              <option selected>L</option><option>M</option><option>Q</option><option>H</option>
-            </select>
-          </label>
-          <label>
-            encryption
-            <select id="cfg-encrypt">
-              <option value="off" selected>Off</option>
-              <option value="pin">4-Digit PIN</option>
-            </select>
-          </label>
-          <label id="cfg-pin-container" hidden>
-            PIN Secret
-            <div class="pin-input-group">
-              <input id="cfg-pin" type="text" maxlength="6" pattern="[0-9]*" value="1234" style="width: 80px;" />
-              <button id="gen-pin-btn" type="button" class="history-toggle-btn">Gen</button>
-            </div>
-          </label>
-          <label>
-            display size
-            <input id="cfg-size" type="range" min="300" max="1200" step="50" value="900" />
-          </label>
-        </div>
-      </details>
-      <div class="hint footer-hint">
-        Open <a href="../receive/">Receive</a> on the other device. Turn up this screen's brightness.
-      </div>
     </main>
     <footer class="site-footer">
       <span class="footer-id">
